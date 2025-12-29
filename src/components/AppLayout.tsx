@@ -1,21 +1,34 @@
+"use client";
+
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { SidebarProvider, useSidebar } from "./SidebarContext";
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AppLayout({ children }: AppLayoutProps) {
+function AppLayoutContent({ children }: AppLayoutProps) {
+  const { isOpen } = useSidebar();
+
   return (
-    <div className="flex min-h-screen bg-white">
-      <Sidebar />
-      <div className="flex-1 ml-64">
-        <Header />
-        <main>
+    <div className="flex flex-col h-screen bg-white">
+      <Header />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <main className="flex-1 overflow-y-auto p-4">
           {children}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AppLayout({ children }: AppLayoutProps) {
+  return (
+    <SidebarProvider>
+      <AppLayoutContent>{children}</AppLayoutContent>
+    </SidebarProvider>
   );
 }
 

@@ -38,7 +38,7 @@ export default function Modal({ isOpen, onClose, title, children }: ModalProps) 
       onClick={onClose}
     >
       {/* オーバーレイ */}
-      <div className="absolute inset-0 bg-zinc-900 bg-opacity-30" />
+      <div className="absolute inset-0 bg-black/50" />
 
       {/* モーダルコンテンツ */}
       <div

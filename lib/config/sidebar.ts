@@ -7,11 +7,8 @@ export interface SidebarMenuItem {
 export const sidebarMenuItems: SidebarMenuItem[] = [
   {
     label: "案件一覧",
-    href: "/contacts",
-  },
-  {
-    label: "タスク",
-    href: "/tasks",
+    href: "/projects",
   },
 ];
+
 
