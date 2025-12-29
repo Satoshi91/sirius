@@ -3,6 +3,7 @@
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { SidebarProvider, useSidebar } from "./SidebarContext";
+import { usePathname } from "next/navigation";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,13 @@ interface AppLayoutProps {
 
 function AppLayoutContent({ children }: AppLayoutProps) {
   const { isOpen } = useSidebar();
+  const pathname = usePathname();
+  const isLoginPage = pathname?.startsWith("/login") ?? false;
+
+  // ログインページの場合はヘッダーとサイドバーを表示しない
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-white">

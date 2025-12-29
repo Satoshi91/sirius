@@ -5,7 +5,8 @@ import { Timestamp } from 'firebase/firestore';
  */
 export interface Project {
   id: string;
-  name: string;                    // 案件名（必須）
+  title: string;                   // 案件名（必須）
+  name: string;                    // 氏名（必須）
   nameEnglish?: string;            // 英語名（オプション、モックデータのenglishNameに相当）
   nationality: string;             // 国籍（必須）
   visaType: string;                // 申請する在留資格（必須）
@@ -52,6 +53,9 @@ export interface ProjectDocument {
   // 原本必要フラグ
   isRequiredOriginal: boolean;      // 原本必要か
   
+  // マスタ書類ID
+  masterDocumentId?: string;        // 必要書類マスタのIDへの参照
+  
   // 依存関係
   dependsOn?: string[];            // 依存する書類IDの配列
   canCreateAfter?: string[];       // これらの書類が集まった後に作成可能
@@ -75,5 +79,57 @@ export interface ProjectDocument {
   // メタデータ
   createdAt: Date | Timestamp;
   updatedAt?: Date | Timestamp;
+}
+
+/**
+ * ユーザー（User）の型定義
+ */
+export interface User {
+  id: string;                    // メールアドレス（FirestoreのドキュメントID）
+  email: string;
+  displayName: string;
+  role: 'admin' | 'staff';       // ロール
+  isActive: boolean;              // 有効/無効
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
+  createdBy?: string;             // 作成者のメールアドレス（adminのみ）
+}
+
+/**
+ * 案件操作履歴の型定義
+ */
+export interface ProjectActivityLog {
+  id: string;
+  projectId: string;                    // 案件ID
+  actionType:                            // 操作の種類
+    | 'project_created'                  // 案件作成
+    | 'project_updated'                  // 案件更新
+    | 'project_deleted'                  // 案件削除
+    | 'document_created'                 // 書類作成
+    | 'document_updated'                 // 書類更新
+    | 'document_deleted'                 // 書類削除
+    | 'document_file_uploaded'           // 書類ファイルアップロード
+    | 'documents_bulk_created'           // 書類一括作成
+    | 'documents_bulk_deleted';          // 書類一括削除
+  description: string;                   // 操作の説明（例: "案件情報を更新しました"）
+  details?: {                            // 操作の詳細情報（任意）
+    field?: string;                      // 変更されたフィールド名
+    oldValue?: string | number | null;   // 変更前の値
+    newValue?: string | number | null;   // 変更後の値
+    documentId?: string;                 // 関連する書類ID
+    documentName?: string;               // 関連する書類名
+    count?: number;                      // 一括操作の件数
+    documentNames?: string[];            // 書類名の配列（一括削除時など）
+    fileName?: string;                   // ファイル名
+    title?: { oldValue?: string | null; newValue?: string | null };  // 案件名の変更
+    name?: { oldValue?: string | null; newValue?: string | null };   // 氏名の変更
+    nationality?: { oldValue?: string | null; newValue?: string | null };  // 国籍の変更
+    visaType?: { oldValue?: string | null; newValue?: string | null };     // 在留資格の変更
+    expiryDate?: { oldValue?: string | null; newValue?: string | null };   // 在留期限の変更
+    status?: { oldValue?: string | null; newValue?: string | null };       // ステータスの変更
+  };
+  performedBy: string;                   // 実行したユーザーのメールアドレス
+  performedByName?: string;              // 実行したユーザーの表示名（オプション）
+  createdAt: Date | Timestamp;
 }
 

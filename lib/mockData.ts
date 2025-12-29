@@ -55,6 +55,7 @@ function convertStatus(oldStatus: string): 'active' | 'pending' | 'completed' {
 export const mockProjects: Project[] = [
   {
     id: "mock-project-1",
+    title: "技術・人文知識・国際業務の申請",
     name: "田中太郎",
     nameEnglish: "Taro Tanaka",
     nationality: "日本",
@@ -67,6 +68,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-2",
+    title: "経営・管理ビザの申請",
     name: "Smith John",
     nameEnglish: "John Smith",
     nationality: "アメリカ",
@@ -79,6 +81,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-3",
+    title: "永住許可の申請",
     name: "佐藤花子",
     nameEnglish: "Hanako Sato",
     nationality: "日本",
@@ -91,6 +94,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-4",
+    title: "留学ビザの申請",
     name: "李小明",
     nameEnglish: "Xiaoming Li",
     nationality: "中国",
@@ -103,6 +107,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-5",
+    title: "高度専門職ビザの申請",
     name: "Park Min-ji",
     nameEnglish: "Min-ji Park",
     nationality: "韓国",
@@ -115,6 +120,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-6",
+    title: "家族滞在ビザの申請",
     name: "山田次郎",
     nameEnglish: "Jiro Yamada",
     nationality: "日本",
@@ -127,6 +133,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-7",
+    title: "技能実習ビザの申請",
     name: "Nguyen Van A",
     nameEnglish: "Van A Nguyen",
     nationality: "ベトナム",
@@ -139,6 +146,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-8",
+    title: "定住者ビザの申請",
     name: "Garcia Maria",
     nameEnglish: "Maria Garcia",
     nationality: "フィリピン",
@@ -151,6 +159,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-9",
+    title: "技術・人文知識・国際業務の申請",
     name: "Patel Raj",
     nameEnglish: "Raj Patel",
     nationality: "インド",
@@ -163,6 +172,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-10",
+    title: "日本人の配偶者等ビザの申請",
     name: "Suthipong Somchai",
     nameEnglish: "Somchai Suthipong",
     nationality: "タイ",
@@ -175,6 +185,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-11",
+    title: "永住者の配偶者等ビザの申請",
     name: "Widodo Budi",
     nameEnglish: "Budi Widodo",
     nationality: "インドネシア",
@@ -187,6 +198,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-12",
+    title: "特定活動ビザの申請",
     name: "Chen Wei",
     nameEnglish: "Wei Chen",
     nationality: "中国",
@@ -199,6 +211,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-13",
+    title: "技術・人文知識・国際業務の申請",
     name: "Kim Soo-jin",
     nameEnglish: "Soo-jin Kim",
     nationality: "韓国",
@@ -211,6 +224,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-14",
+    title: "経営・管理ビザの申請",
     name: "Williams David",
     nameEnglish: "David Williams",
     nationality: "アメリカ",
@@ -223,6 +237,7 @@ export const mockProjects: Project[] = [
   },
   {
     id: "mock-project-15",
+    title: "定住者ビザの申請",
     name: "Tran Thi B",
     nameEnglish: "Thi B Tran",
     nationality: "ベトナム",

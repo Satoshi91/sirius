@@ -48,7 +48,7 @@ export default function SearchFilter({
       <div className="flex flex-wrap gap-4">
         <div className="w-full sm:w-auto min-w-[180px]">
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
               <SelectValue placeholder="ステータス" />
             </SelectTrigger>
             <SelectContent>
@@ -61,7 +61,7 @@ export default function SearchFilter({
         </div>
         <div className="w-full sm:w-auto min-w-[200px]">
           <Select value={visaTypeFilter} onValueChange={onVisaTypeFilterChange}>
-            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
               <SelectValue placeholder="在留資格" />
             </SelectTrigger>
             <SelectContent>
@@ -76,7 +76,7 @@ export default function SearchFilter({
         </div>
         <div className="w-full sm:w-auto min-w-[180px]">
           <Select value={sortBy} onValueChange={onSortByChange}>
-            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+            <SelectTrigger className="border-blue-200 focus:border-blue-500 focus:ring-blue-500">
               <SelectValue placeholder="ソート" />
             </SelectTrigger>
             <SelectContent>

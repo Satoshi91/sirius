@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { deleteProjectAction } from "../actions";
 import Modal from "@/components/Modal";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import ProjectEditForm from "./ProjectEditForm";
 import { Project } from "@/types";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface ProjectActionsProps {
   project: Project;
@@ -15,21 +17,26 @@ interface ProjectActionsProps {
 export default function ProjectActions({ project }: ProjectActionsProps) {
   const router = useRouter();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
+  
+  const handleCloseEditModal = useCallback(() => {
+    setIsEditModalOpen(false);
+  }, []);
+  
+  const handleCloseDeleteConfirm = useCallback(() => {
+    setIsDeleteConfirmOpen(false);
+  }, []);
 
-  const handleDelete = async () => {
-    const confirmed = window.confirm(
-      `案件「${project.name}」を削除してもよろしいですか？\nこの操作は取り消せません。`
-    );
+  const handleDeleteClick = () => {
+    setIsDeleteConfirmOpen(true);
+  };
 
-    if (!confirmed) {
-      return;
-    }
-
+  const handleDeleteConfirm = async () => {
     startTransition(async () => {
       const result = await deleteProjectAction(project.id);
       if (result?.error) {
-        alert(result.error);
+        toast.error(result.error);
       } else if (result?.success) {
         router.push("/projects");
       }
@@ -47,7 +54,7 @@ export default function ProjectActions({ project }: ProjectActionsProps) {
           編集
         </Button>
         <Button
-          onClick={handleDelete}
+          onClick={handleDeleteClick}
           variant="destructive"
           size="sm"
           disabled={isPending}
@@ -58,14 +65,25 @@ export default function ProjectActions({ project }: ProjectActionsProps) {
 
       <Modal
         isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        onClose={handleCloseEditModal}
         title="案件を編集"
       >
         <ProjectEditForm
           project={project}
-          onSuccess={() => setIsEditModalOpen(false)}
+          onSuccess={handleCloseEditModal}
         />
       </Modal>
+
+      <ConfirmDialog
+        isOpen={isDeleteConfirmOpen}
+        onClose={handleCloseDeleteConfirm}
+        onConfirm={handleDeleteConfirm}
+        title="案件の削除"
+        message={`案件「${project.name}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
+        confirmText="削除"
+        cancelText="キャンセル"
+        variant="destructive"
+      />
     </>
   );
 }

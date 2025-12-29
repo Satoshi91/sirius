@@ -1,12 +1,14 @@
 import { getProject } from "@/lib/services/projectService";
 import { getDocuments } from "@/lib/services/documentService";
+import { getActivityLogs } from "@/lib/services/activityLogService";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import DocumentList from "./components/DocumentList";
+import ProjectTabs from "./components/ProjectTabs";
 import ProjectActions from "./components/ProjectActions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Timestamp } from "firebase/firestore";
+import { requireAuth } from "@/lib/auth/auth";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -15,6 +17,9 @@ interface ProjectDetailPageProps {
 }
 
 export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  // 認証チェック
+  await requireAuth();
+  
   const { id } = await params;
   const project = await getProject(id);
 
@@ -29,6 +34,16 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     console.error("Error fetching documents:", error);
     // エラーが発生した場合は空配列を使用
     documents = [];
+  }
+
+  // 操作履歴を取得
+  let activityLogs = [];
+  try {
+    activityLogs = await getActivityLogs(id);
+  } catch (error) {
+    console.error("Error fetching activity logs:", error);
+    // エラーが発生した場合は空配列を使用
+    activityLogs = [];
   }
 
   const formatDate = (date: Date | Timestamp | null | undefined): string => {
@@ -75,7 +90,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         <div className="grid grid-cols-12 gap-6">
           {/* 左カラム: 案件基本情報カード（約30%） */}
           <div className="col-span-12 lg:col-span-3">
-            <div className="sticky top-4">
+            <div className="sticky top-4 z-30">
               <Card>
                 <CardHeader>
                   <div className="flex items-center justify-between">
@@ -85,6 +100,11 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    <div>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-1">案件名</h3>
+                      <p className="text-black font-medium">{project.title}</p>
+                    </div>
+
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700 mb-1">氏名（漢字）</h3>
                       <p className="text-black font-medium">{project.name}</p>
@@ -131,9 +151,9 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             </div>
           </div>
 
-          {/* 右カラム: 書類管理メインエリア（約70%） */}
+          {/* 右カラム: メインコンテンツエリア（約70%） */}
           <div className="col-span-12 lg:col-span-9">
-            <DocumentList projectId={id} documents={documents} />
+            <ProjectTabs projectId={id} documents={documents} project={project} activityLogs={activityLogs} />
           </div>
         </div>
       </div>

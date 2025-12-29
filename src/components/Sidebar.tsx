@@ -5,10 +5,20 @@ import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { sidebarMenuItems } from "@/lib/config/sidebar";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "./auth/AuthProvider";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
+  const { user } = useAuth();
+
+  // ロールに応じてメニューをフィルタリング
+  const visibleMenuItems = sidebarMenuItems.filter((item) => {
+    if (item.adminOnly && user?.role !== 'admin') {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <>
@@ -23,7 +33,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-50
+          fixed inset-y-0 left-0 z-40
           w-64 bg-white border-r border-zinc-200
           h-full overflow-y-auto
           transform transition-transform duration-300 ease-in-out
@@ -43,7 +53,7 @@ export default function Sidebar() {
           </div>
           <nav>
             <ul className="space-y-2">
-              {sidebarMenuItems.map((item) => {
+              {visibleMenuItems.map((item) => {
                 const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                 return (
                   <li key={item.href}>

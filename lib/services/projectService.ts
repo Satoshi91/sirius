@@ -12,6 +12,7 @@ export async function getProjects(): Promise<Project[]> {
       const data = doc.data();
       return {
         id: doc.id,
+        title: data.title || '',
         name: data.name,
         nameEnglish: data.nameEnglish,
         nationality: data.nationality,
@@ -44,6 +45,7 @@ export async function getProject(id: string): Promise<Project | null> {
     const data = projectSnap.data();
     return {
       id: projectSnap.id,
+      title: data.title || '',
       name: data.name,
       nameEnglish: data.nameEnglish,
       nationality: data.nationality,
@@ -70,6 +72,7 @@ export async function createProject(
     const now = Timestamp.now();
     
     const projectData: any = {
+      title: data.title,
       name: data.name,
       nationality: data.nationality,
       visaType: data.visaType,
@@ -113,6 +116,7 @@ export async function updateProject(
       updatedAt: now,
     };
     
+    if (data.title !== undefined) updateData.title = data.title;
     if (data.name !== undefined) updateData.name = data.name;
     if (data.nameEnglish !== undefined) updateData.nameEnglish = data.nameEnglish || null;
     if (data.nationality !== undefined) updateData.nationality = data.nationality;

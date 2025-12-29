@@ -86,6 +86,7 @@ export default function ImmigrationCaseTable({
         <TableHeader>
           <TableRow className="bg-blue-50">
             <TableHead className="w-[120px]">期限</TableHead>
+            <TableHead>案件名</TableHead>
             <TableHead>依頼者名</TableHead>
             <TableHead className="w-[100px]">国籍</TableHead>
             <TableHead className="w-[150px]">ビザの種類</TableHead>
@@ -121,6 +122,11 @@ export default function ImmigrationCaseTable({
                   ) : (
                     <span className="text-gray-700">-</span>
                   )}
+                </TableCell>
+                <TableCell>
+                  <div className="font-medium text-black">
+                    {project.title}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div>

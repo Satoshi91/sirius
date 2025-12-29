@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ProjectDocument } from "@/types";
 import { createDocumentAction } from "../actions";
+import { toast } from "sonner";
 
 interface DocumentFormProps {
   projectId: string;
@@ -51,14 +52,14 @@ export default function DocumentForm({
       const result = await createDocumentAction(projectId, formDataToSend);
       
       if (result?.error) {
-        alert(result.error);
+        toast.error(result.error);
       } else if (result?.success) {
         onSuccess();
         router.refresh();
       }
     } catch (error) {
       console.error("Error creating document:", error);
-      alert("書類の作成に失敗しました");
+      toast.error("書類の作成に失敗しました");
     } finally {
       setIsSubmitting(false);
     }

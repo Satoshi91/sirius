@@ -36,6 +36,9 @@ export default function ProjectList({ projects }: ProjectListProps) {
               案件名
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-black">
+              氏名
+            </th>
+            <th className="px-4 py-3 text-left text-sm font-semibold text-black">
               国籍
             </th>
             <th className="px-4 py-3 text-left text-sm font-semibold text-black">
@@ -57,8 +60,11 @@ export default function ProjectList({ projects }: ProjectListProps) {
                   href={`/projects/${project.id}`}
                   className="text-black font-medium hover:text-zinc-700"
                 >
-                  {project.name}
+                  {project.title}
                 </Link>
+              </td>
+              <td className="px-4 py-3 text-zinc-700">
+                {project.name}
               </td>
               <td className="px-4 py-3 text-zinc-700">
                 {project.nationality}

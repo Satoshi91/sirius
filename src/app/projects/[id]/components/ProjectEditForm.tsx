@@ -27,6 +27,7 @@ export default function ProjectEditForm({
   };
 
   const [formData, setFormData] = useState({
+    title: project.title,
     name: project.name,
     nationality: project.nationality,
     visaType: project.visaType,
@@ -41,8 +42,11 @@ export default function ProjectEditForm({
 
     // クライアント側バリデーション
     const newErrors: Record<string, string> = {};
+    if (!formData.title.trim()) {
+      newErrors.title = "案件名は必須です";
+    }
     if (!formData.name.trim()) {
-      newErrors.name = "案件名は必須です";
+      newErrors.name = "氏名は必須です";
     }
     if (!formData.nationality.trim()) {
       newErrors.nationality = "国籍は必須です";
@@ -56,6 +60,7 @@ export default function ProjectEditForm({
     }
 
     const formDataToSubmit = new FormData();
+    formDataToSubmit.append("title", formData.title);
     formDataToSubmit.append("name", formData.name);
     formDataToSubmit.append("nationality", formData.nationality);
     formDataToSubmit.append("visaType", formData.visaType);
@@ -95,10 +100,35 @@ export default function ProjectEditForm({
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
         <label
-          htmlFor="name"
+          htmlFor="title"
           className="block text-sm font-medium text-black mb-2"
         >
           案件名 <span className="text-red-500">*</span>
+        </label>
+        <input
+          type="text"
+          id="title"
+          name="title"
+          value={formData.title}
+          onChange={handleChange}
+          className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
+            fieldErrors.title
+              ? "border-red-500"
+              : "border-zinc-200 focus:border-black"
+          }`}
+          placeholder="案件名を入力"
+        />
+        {fieldErrors.title && (
+          <p className="mt-1 text-sm text-red-500">{fieldErrors.title}</p>
+        )}
+      </div>
+
+      <div>
+        <label
+          htmlFor="name"
+          className="block text-sm font-medium text-black mb-2"
+        >
+          氏名 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -111,7 +141,7 @@ export default function ProjectEditForm({
               ? "border-red-500"
               : "border-zinc-200 focus:border-black"
           }`}
-          placeholder="案件名を入力"
+          placeholder="氏名を入力"
         />
         {fieldErrors.name && (
           <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>

@@ -44,7 +44,7 @@ export default function FilterSortBar({
           ステータス
         </label>
         <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="すべて" />
           </SelectTrigger>
           <SelectContent>
@@ -61,7 +61,7 @@ export default function FilterSortBar({
           在留資格
         </label>
         <Select value={visaTypeFilter} onValueChange={onVisaTypeFilterChange}>
-          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="すべて" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +80,7 @@ export default function FilterSortBar({
           ソート
         </label>
         <Select value={sortBy} onValueChange={onSortByChange}>
-          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="ソート順" />
           </SelectTrigger>
           <SelectContent>
@@ -99,7 +99,7 @@ export default function FilterSortBar({
           value={sortOrder}
           onValueChange={(value) => onSortOrderChange(value as "asc" | "desc")}
         >
-          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500 text-gray-800">
+          <SelectTrigger className="w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500">
             <SelectValue placeholder="並び順" />
           </SelectTrigger>
           <SelectContent>

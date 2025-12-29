@@ -93,6 +93,7 @@ async function seedProjects(): Promise<Record<string, string>> {
   try {
     for (const project of mockProjects) {
       const projectData = {
+        title: project.title,
         name: project.name,
         nameEnglish: project.nameEnglish || null,
         nationality: project.nationality,

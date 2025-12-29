@@ -3,8 +3,12 @@ import ProjectsPageClient from "./components/ProjectsPageClient";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { requireAuth } from "@/lib/auth/auth";
 
 export default async function ProjectsPage() {
+  // 認証チェック
+  // requireAuth()は未認証の場合に自動的にログインページにリダイレクトする
+  await requireAuth();
   const projects = await getProjects();
 
   return (

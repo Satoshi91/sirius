@@ -8,7 +8,8 @@ import {
   Timestamp,
   writeBatch,
   doc,
-  updateDoc
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
@@ -110,6 +111,9 @@ export async function uploadFileToDocument(
  * @returns 書類一覧
  */
 export async function getDocuments(projectId: string): Promise<ProjectDocument[]> {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:113',message:'getDocuments entry',data:{projectId,usingFirebase:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   // モックデータから該当プロジェクトIDの書類を検索（デバッグ用）
   // const projectDocuments = mockDocuments
   //   .filter(doc => doc.projectId === projectId)
@@ -124,6 +128,9 @@ export async function getDocuments(projectId: string): Promise<ProjectDocument[]
     const documentsRef = collection(db, `projects/${projectId}/documents`);
     const q = query(documentsRef, orderBy("createdAt", "asc"));
     const querySnapshot = await getDocs(q);
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:127',message:'getDocuments Firebase query result',data:{projectId,docsCount:querySnapshot.docs.length,usingFirebase:true},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     
     return querySnapshot.docs.map((doc) => {
       const data = doc.data();
@@ -146,6 +153,7 @@ export async function getDocuments(projectId: string): Promise<ProjectDocument[]
         instructions: data.instructions,
         requirements: data.requirements,
         notes: data.notes,
+        masterDocumentId: data.masterDocumentId || undefined,
         fileUrl: data.fileUrl || undefined,
         storagePath: data.storagePath || undefined,
         createdAt: data.createdAt?.toDate() || new Date(),
@@ -243,9 +251,12 @@ export async function bulkCreateDocuments(
   projectId: string,
   documents: Omit<ProjectDocument, "id" | "createdAt" | "updatedAt" | "fileUrl" | "storagePath">[]
 ): Promise<string[]> {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:244',message:'bulkCreateDocuments entry',data:{projectId,documentsCount:documents.length,usingFirebase:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
   // TODO: Firebase接続時にコメントアウトを外してモックデータ部分をコメントアウトする
-  // モックデータに追加（デバッグ用）
-  const createdIds: string[] = [];
+  // モックデータに追加（デバッグ用）- 無効化: Firebaseを使用するため
+  /* const createdIds: string[] = [];
   const now = new Date();
   
   documents.forEach((data) => {
@@ -269,6 +280,7 @@ export async function bulkCreateDocuments(
       instructions: data.instructions,
       requirements: data.requirements,
       notes: data.notes,
+      masterDocumentId: data.masterDocumentId,
       createdAt: now,
       updatedAt: now,
     };
@@ -276,9 +288,9 @@ export async function bulkCreateDocuments(
     createdIds.push(newId);
   });
   
-  return createdIds;
+  return createdIds; */
 
-  /* Firebase接続時は以下のコードを有効化
+  // Firebase接続時は以下のコードを有効化
   try {
     const documentsRef = collection(db, `projects/${projectId}/documents`);
     const batch = writeBatch(db);
@@ -307,6 +319,7 @@ export async function bulkCreateDocuments(
         instructions: data.instructions || null,
         requirements: data.requirements || null,
         notes: data.notes || null,
+        masterDocumentId: data.masterDocumentId || null,
         createdAt: now,
         updatedAt: now,
       };
@@ -314,12 +327,48 @@ export async function bulkCreateDocuments(
       batch.set(docRef, documentData);
     });
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:333',message:'Before batch.commit',data:{projectId,documentsCount:documents.length,createdIdsCount:createdIds.length},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     await batch.commit();
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:334',message:'After batch.commit',data:{projectId,createdIdsCount:createdIds.length,createdIds,usingFirebase:true},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     return createdIds;
   } catch (error) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'documentService.ts:336',message:'Error in bulkCreateDocuments',data:{error:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'post-fix',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     console.error("Error bulk creating documents:", error);
     throw error;
   }
-  */
+}
+
+/**
+ * 複数の書類を一括削除する
+ * @param projectId 案件ID
+ * @param documentIds 削除する書類IDの配列
+ */
+export async function bulkDeleteDocuments(
+  projectId: string,
+  documentIds: string[]
+): Promise<void> {
+  if (!documentIds || documentIds.length === 0) {
+    return;
+  }
+
+  try {
+    const batch = writeBatch(db);
+    
+    documentIds.forEach((documentId) => {
+      const docRef = doc(db, `projects/${projectId}/documents/${documentId}`);
+      batch.delete(docRef);
+    });
+
+    await batch.commit();
+  } catch (error) {
+    console.error("Error bulk deleting documents:", error);
+    throw error;
+  }
 }
 

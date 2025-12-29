@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Timestamp } from "firebase/firestore";
-import { Upload, Eye, Loader2, Plus, FileStack } from "lucide-react";
+import { Upload, Eye, Loader2, Plus, FileStack, File, CheckCircle2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import Modal from "@/components/Modal";
 import DocumentForm from "./DocumentForm";
 import { ProjectDocument } from "@/types";
 import { uploadDocumentAction } from "../actions";
+import { toast } from "sonner";
 
 interface DocumentListProps {
   projectId: string;
@@ -27,6 +28,10 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
   const [uploadingDocId, setUploadingDocId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  
+  const handleCloseModal = useCallback(() => {
+    setIsModalOpen(false);
+  }, []);
 
   const handleUploadClick = (docId: string) => {
     const input = fileInputRefs.current[docId];
@@ -46,13 +51,14 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
 
       const result = await uploadDocumentAction(projectId, docId, formData);
       if (result?.error) {
-        alert(result.error);
+        toast.error(result.error);
       } else if (result?.success) {
+        toast.success("ファイルをアップロードしました");
         router.refresh();
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      alert("ファイルのアップロードに失敗しました");
+      toast.error("ファイルのアップロードに失敗しました");
     } finally {
       setUploadingDocId(null);
       // Reset input
@@ -64,7 +70,7 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
 
   const handlePreview = (fileUrl: string) => {
     if (!fileUrl) {
-      alert("ファイルがアップロードされていません");
+      toast.error("ファイルがアップロードされていません");
       return;
     }
     window.open(fileUrl, "_blank");
@@ -161,6 +167,13 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
     });
   };
 
+  // ファイル名をstoragePathから抽出
+  const getFileNameFromPath = (storagePath?: string): string | null => {
+    if (!storagePath) return null;
+    const parts = storagePath.split('/');
+    return parts[parts.length - 1] || null;
+  };
+
   return (
     <>
       <div className="space-y-6">
@@ -219,6 +232,7 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
                           <TableHead>取得元</TableHead>
                           <TableHead>担当</TableHead>
                           <TableHead>ステータス</TableHead>
+                          <TableHead>ファイル状態</TableHead>
                           <TableHead className="text-right">アクション</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -259,9 +273,38 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
                               </span>
                             </TableCell>
                             <TableCell>{getStatusBadge(document.status)}</TableCell>
+                            <TableCell>
+                              {document.fileUrl ? (
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-2">
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                    <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+                                      アップロード済み
+                                    </Badge>
+                                  </div>
+                                  {document.storagePath && (
+                                    <div className="flex items-center gap-1 text-xs text-gray-600">
+                                      <File className="h-3 w-3" />
+                                      <span className="truncate max-w-[200px]" title={getFileNameFromPath(document.storagePath) || ''}>
+                                        {getFileNameFromPath(document.storagePath)}
+                                      </span>
+                                    </div>
+                                  )}
+                                  {document.updatedAt && (
+                                    <span className="text-xs text-gray-500">
+                                      {formatDate(document.updatedAt)}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <Badge variant="outline" className="bg-gray-100 text-gray-600">
+                                  未アップロード
+                                </Badge>
+                              )}
+                            </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                {document.status !== 'not_started' && document.status !== 'waiting' && (
+                                {!document.fileUrl && (
                                   <>
                                     <input
                                       ref={(el) => (fileInputRefs.current[document.id] = el)}
@@ -290,14 +333,40 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
                                   </>
                                 )}
                                 {document.fileUrl && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handlePreview(document.fileUrl!)}
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" />
-                                    プレビュー
-                                  </Button>
+                                  <>
+                                    <input
+                                      ref={(el) => (fileInputRefs.current[document.id] = el)}
+                                      type="file"
+                                      className="hidden"
+                                      onChange={(e) => handleFileChange(document.id, e)}
+                                    />
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleUploadClick(document.id)}
+                                      disabled={uploadingDocId === document.id}
+                                    >
+                                      {uploadingDocId === document.id ? (
+                                        <>
+                                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                          アップロード中
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Upload className="mr-2 h-4 w-4" />
+                                          再アップロード
+                                        </>
+                                      )}
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handlePreview(document.fileUrl!)}
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" />
+                                      プレビュー
+                                    </Button>
+                                  </>
                                 )}
                               </div>
                             </TableCell>
@@ -316,7 +385,7 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
 
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={handleCloseModal}
         title="書類の新規登録"
       >
         <DocumentForm

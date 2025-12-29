@@ -1,13 +1,36 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Search, HelpCircle, Bell, Menu } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Search, HelpCircle, Bell, Menu, LogOut, User } from "lucide-react";
 import { useSidebar } from "./SidebarContext";
+import { useAuth } from "./auth/AuthProvider";
+import { signOut } from "@/lib/auth/authClient";
+import { toast } from "sonner";
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const { toggle } = useSidebar();
+  const { user } = useAuth();
+
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'src/components/Header.tsx:15',message:'Header user state',data:{hasUser:!!user,userId:user?.id||null,userDisplayName:user?.displayName||null,userRole:user?.role||null,pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+  }, [user, pathname]);
+  // #endregion
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success("ログアウトしました");
+      router.push("/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+      toast.error("ログアウトに失敗しました");
+    }
+  };
 
   // Generate breadcrumbs from pathname
   const generateBreadcrumbs = () => {
@@ -30,7 +53,7 @@ export default function Header() {
   const breadcrumbs = generateBreadcrumbs();
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-zinc-200">
+    <header className="sticky top-0 z-40 w-full bg-white border-b border-zinc-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Header Content */}
         <div className="flex items-center justify-between h-16">
@@ -99,6 +122,23 @@ export default function Header() {
               <Bell className="h-5 w-5" />
               <span>お知らせ</span>
             </button>
+            {user && (
+              <>
+                <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700">
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:inline">{user.displayName}</span>
+                  <span className="hidden sm:inline text-zinc-400">({user.role === 'admin' ? '管理者' : 'スタッフ'})</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 text-zinc-700 hover:text-black transition-colors"
+                  title="ログアウト"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="hidden sm:inline">ログアウト</span>
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
