@@ -3,13 +3,14 @@ import { getFirestore, collection, addDoc, Timestamp, getDocs, deleteDoc, doc } 
 import { Project, Customer } from "../src/types";
 
 // Firebase設定（環境変数から読み込む、フォールバックとしてlib/firebase.tsの設定を使用）
+// 改行文字やスペースを削除するため.trim()を使用
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sirius-cf574.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sirius-cf574",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sirius-cf574.firebasestorage.app",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "753671151982",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:753671151982:web:457a1dd3d208b39b1ca17f",
+  apiKey: (process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg").trim(),
+  authDomain: (process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "sirius-cf574.firebaseapp.com").trim(),
+  projectId: (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "sirius-cf574").trim(),
+  storageBucket: (process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "sirius-cf574.firebasestorage.app").trim(),
+  messagingSenderId: (process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "753671151982").trim(),
+  appId: (process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:753671151982:web:457a1dd3d208b39b1ca17f").trim(),
 };
 
 // Firebase初期化
