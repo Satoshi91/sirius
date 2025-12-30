@@ -30,8 +30,13 @@ foreach ($line in $lines) {
             $value = $matches[1]
         }
         
-        # Convert \n to actual newlines (for FIREBASE_PRIVATE_KEY)
-        $value = $value -replace '\\n', "`n"
+        # Convert \n to actual newlines (for FIREBASE_PRIVATE_KEY only)
+        if ($key -match "PRIVATE_KEY") {
+            $value = $value -replace '\\n', "`n"
+        } else {
+            # Remove all newline characters (CRLF, LF, CR) for other variables
+            $value = $value -replace "`r`n", "" -replace "`n", "" -replace "`r", ""
+        }
         
         $envVars[$key] = $value
     }
@@ -80,10 +85,18 @@ foreach ($key in $envVars.Keys) {
     foreach ($env in $environments) {
         Write-Host "  -> Setting to $env environment..." -ForegroundColor Yellow -NoNewline
         
-        # Write value to temporary file (UTF-8, preserve newlines)
+        # Write value to temporary file (UTF-8)
+        # Ensure no trailing newlines for non-PRIVATE_KEY variables
+        $valueToWrite = if ($key -match "PRIVATE_KEY") {
+            $value
+        } else {
+            # Remove any trailing newlines
+            $value.TrimEnd("`r", "`n")
+        }
+        
         $tempFile = [System.IO.Path]::GetTempFileName()
         try {
-            [System.IO.File]::WriteAllText($tempFile, $value, [System.Text.Encoding]::UTF8)
+            [System.IO.File]::WriteAllText($tempFile, $valueToWrite, [System.Text.Encoding]::UTF8)
             
             # Execute vercel env add command
             # Use temporary file as standard input

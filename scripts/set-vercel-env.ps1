@@ -31,6 +31,12 @@ foreach ($line in $lines) {
             $value = $matches[1]
         }
         
+        # 改行文字を削除（CRLF、LF、CRのすべて）
+        # FIREBASE_PRIVATE_KEYの場合は改行を保持する必要があるため、特別処理
+        if ($key -notmatch "PRIVATE_KEY") {
+            $value = $value -replace "`r`n", "" -replace "`n", "" -replace "`r", ""
+        }
+        
         $envVars[$key] = $value
     }
 }
@@ -80,8 +86,16 @@ foreach ($key in $envVars.Keys) {
         Write-Host "  → $env に設定中..." -ForegroundColor Yellow
         
         # 一時ファイルに値を書き込む
+        # 改行文字を確実に削除してから書き込む（FIREBASE_PRIVATE_KEYは除く）
+        $valueToWrite = if ($key -match "PRIVATE_KEY") {
+            $currentValue
+        } else {
+            # 改行文字を完全に削除
+            $currentValue -replace "`r`n", "" -replace "`n", "" -replace "`r", ""
+        }
+        
         $tempFile = [System.IO.Path]::GetTempFileName()
-        $currentValue | Out-File -FilePath $tempFile -Encoding utf8 -NoNewline
+        [System.IO.File]::WriteAllText($tempFile, $valueToWrite, [System.Text.Encoding]::UTF8)
         
         # vercel env addコマンドを実行
         # 注意: vercel env addは対話的で、パイプからの入力を受け付けない場合があります

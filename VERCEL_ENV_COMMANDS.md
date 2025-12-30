@@ -3,33 +3,38 @@
 `.env.local`の内容から、Vercel CLIで環境変数を設定するコマンドです。
 以下のコマンドをコピー&ペーストして実行してください。
 
+**重要**: `echo`コマンドは改行文字を追加する可能性があるため、以下の方法を使用してください。
+
 ## すべての環境に設定する場合
 
 ```powershell
+# 改行文字を確実に削除するため、Write-Output -NoEnumerate を使用
+# または、一時ファイルを使用する方法（推奨）
+
 # NEXT_PUBLIC_FIREBASE_API_KEY
-echo "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg" | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production
-echo "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg" | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY preview
-echo "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg" | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY development
+$value = "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg"; $value | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production
+$value = "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg"; $value | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY preview
+$value = "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg"; $value | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY development
 
 # NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-echo "sirius-cf574.firebaseapp.com" | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN production
-echo "sirius-cf574.firebaseapp.com" | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN preview
-echo "sirius-cf574.firebaseapp.com" | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN development
+$value = "sirius-cf574.firebaseapp.com"; $value | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN production
+$value = "sirius-cf574.firebaseapp.com"; $value | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN preview
+$value = "sirius-cf574.firebaseapp.com"; $value | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN development
 
 # NEXT_PUBLIC_FIREBASE_PROJECT_ID
-echo "sirius-cf574" | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID production
-echo "sirius-cf574" | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID preview
-echo "sirius-cf574" | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID development
+$value = "sirius-cf574"; $value | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID production
+$value = "sirius-cf574"; $value | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID preview
+$value = "sirius-cf574"; $value | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID development
 
 # FIREBASE_PROJECT_ID
-echo "sirius-cf574" | vercel env add FIREBASE_PROJECT_ID production
-echo "sirius-cf574" | vercel env add FIREBASE_PROJECT_ID preview
-echo "sirius-cf574" | vercel env add FIREBASE_PROJECT_ID development
+$value = "sirius-cf574"; $value | vercel env add FIREBASE_PROJECT_ID production
+$value = "sirius-cf574"; $value | vercel env add FIREBASE_PROJECT_ID preview
+$value = "sirius-cf574"; $value | vercel env add FIREBASE_PROJECT_ID development
 
 # FIREBASE_CLIENT_EMAIL
-echo "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com" | vercel env add FIREBASE_CLIENT_EMAIL production
-echo "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com" | vercel env add FIREBASE_CLIENT_EMAIL preview
-echo "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com" | vercel env add FIREBASE_CLIENT_EMAIL development
+$value = "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com"; $value | vercel env add FIREBASE_CLIENT_EMAIL production
+$value = "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com"; $value | vercel env add FIREBASE_CLIENT_EMAIL preview
+$value = "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com"; $value | vercel env add FIREBASE_CLIENT_EMAIL development
 
 # FIREBASE_PRIVATE_KEY (長い値のため、PowerShellのヒアストリングを使用)
 $privateKey = @"
@@ -67,24 +72,24 @@ $privateKey | vercel env add FIREBASE_PRIVATE_KEY preview
 $privateKey | vercel env add FIREBASE_PRIVATE_KEY development
 
 # COOKIE_SIGNATURE_KEY_1
-echo "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b" | vercel env add COOKIE_SIGNATURE_KEY_1 production
-echo "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b" | vercel env add COOKIE_SIGNATURE_KEY_1 preview
-echo "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b" | vercel env add COOKIE_SIGNATURE_KEY_1 development
+$value = "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b"; $value | vercel env add COOKIE_SIGNATURE_KEY_1 production
+$value = "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b"; $value | vercel env add COOKIE_SIGNATURE_KEY_1 preview
+$value = "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b"; $value | vercel env add COOKIE_SIGNATURE_KEY_1 development
 
 # COOKIE_SIGNATURE_KEY_2
-echo "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab" | vercel env add COOKIE_SIGNATURE_KEY_2 production
-echo "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab" | vercel env add COOKIE_SIGNATURE_KEY_2 preview
-echo "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab" | vercel env add COOKIE_SIGNATURE_KEY_2 development
+$value = "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab"; $value | vercel env add COOKIE_SIGNATURE_KEY_2 production
+$value = "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab"; $value | vercel env add COOKIE_SIGNATURE_KEY_2 preview
+$value = "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab"; $value | vercel env add COOKIE_SIGNATURE_KEY_2 development
 ```
 
 ## Production環境のみに設定する場合
 
 ```powershell
-echo "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg" | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production
-echo "sirius-cf574.firebaseapp.com" | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN production
-echo "sirius-cf574" | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID production
-echo "sirius-cf574" | vercel env add FIREBASE_PROJECT_ID production
-echo "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com" | vercel env add FIREBASE_CLIENT_EMAIL production
+$value = "AIzaSyCyjOZ0BLsVrq49-O_ihwMq1kO9ZO_Aoeg"; $value | vercel env add NEXT_PUBLIC_FIREBASE_API_KEY production
+$value = "sirius-cf574.firebaseapp.com"; $value | vercel env add NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN production
+$value = "sirius-cf574"; $value | vercel env add NEXT_PUBLIC_FIREBASE_PROJECT_ID production
+$value = "sirius-cf574"; $value | vercel env add FIREBASE_PROJECT_ID production
+$value = "firebase-adminsdk-fbsvc@sirius-cf574.iam.gserviceaccount.com"; $value | vercel env add FIREBASE_CLIENT_EMAIL production
 
 $privateKey = @"
 -----BEGIN PRIVATE KEY-----
@@ -118,8 +123,8 @@ W9wOM2T1FylJ59yd0Z7Ldw==
 "@
 $privateKey | vercel env add FIREBASE_PRIVATE_KEY production
 
-echo "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b" | vercel env add COOKIE_SIGNATURE_KEY_1 production
-echo "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab" | vercel env add COOKIE_SIGNATURE_KEY_2 production
+$value = "ab3d860ed38194fa5a2c28b391e40d4fd7dfabccedfef731d586c81719c5ee5b"; $value | vercel env add COOKIE_SIGNATURE_KEY_1 production
+$value = "eff39895f50f2e48dfd450e124caea3fb308bbacb844d8aa8da020d4653b07ab"; $value | vercel env add COOKIE_SIGNATURE_KEY_2 production
 ```
 
 ## 確認方法
