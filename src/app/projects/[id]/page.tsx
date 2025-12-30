@@ -1,14 +1,18 @@
 import { getProject } from "@/lib/services/projectService";
 import { getDocuments } from "@/lib/services/documentService";
+import { getTasks } from "@/lib/services/taskService";
 import { getActivityLogs } from "@/lib/services/activityLogService";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import ProjectTabs from "./components/ProjectTabs";
 import ProjectActions from "./components/ProjectActions";
+import PaymentStatusBadge from "./components/PaymentStatusBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Timestamp } from "firebase/firestore";
 import { requireAuth } from "@/lib/auth/auth";
+import CustomerInfoDisplay from "@/components/customers/CustomerInfoDisplay";
+import { ProjectDocument, Task, ProjectActivityLog } from "@/types";
 
 interface ProjectDetailPageProps {
   params: Promise<{
@@ -27,7 +31,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     notFound();
   }
 
-  let documents = [];
+  let documents: ProjectDocument[] = [];
   try {
     documents = await getDocuments(id);
   } catch (error) {
@@ -36,8 +40,18 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     documents = [];
   }
 
+  // タスクを取得
+  let tasks: Task[] = [];
+  try {
+    tasks = await getTasks(id);
+  } catch (error) {
+    console.error("Error fetching tasks:", error);
+    // エラーが発生した場合は空配列を使用
+    tasks = [];
+  }
+
   // 操作履歴を取得
-  let activityLogs = [];
+  let activityLogs: ProjectActivityLog[] = [];
   try {
     activityLogs = await getActivityLogs(id);
   } catch (error) {
@@ -56,9 +70,6 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     });
   };
 
-  const getDateValue = (date: Date | Timestamp): Date => {
-    return date instanceof Date ? date : date.toDate();
-  };
 
   // 在留期限の日数計算
   const getDaysUntilExpiry = (expiryDate: Date | Timestamp | null): number | null => {
@@ -105,20 +116,19 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                       <p className="text-black font-medium">{project.title}</p>
                     </div>
 
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-1">氏名（漢字）</h3>
-                      <p className="text-black font-medium">{project.name}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-1">氏名（英語）</h3>
-                      <p className="text-black">{project.nameEnglish || "-"}</p>
-                    </div>
-
-                    <div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-1">国籍</h3>
-                      <p className="text-black">{project.nationality}</p>
-                    </div>
+                    {project.customer && (
+                      <>
+                        <CustomerInfoDisplay customer={project.customer} showFullInfo={false} />
+                        <div className="pt-2">
+                          <Link
+                            href={`/customers/${project.customer.id}`}
+                            className="text-sm text-blue-600 hover:underline"
+                          >
+                            顧客詳細を見る →
+                          </Link>
+                        </div>
+                      </>
+                    )}
 
                     <div>
                       <h3 className="text-sm font-semibold text-gray-700 mb-1">現在の在留資格</h3>
@@ -145,6 +155,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                         <p className="text-gray-700">-</p>
                       )}
                     </div>
+
+                    <PaymentStatusBadge project={project} />
                   </div>
                 </CardContent>
               </Card>
@@ -153,7 +165,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
 
           {/* 右カラム: メインコンテンツエリア（約70%） */}
           <div className="col-span-12 lg:col-span-9">
-            <ProjectTabs projectId={id} documents={documents} project={project} activityLogs={activityLogs} />
+            <ProjectTabs projectId={id} documents={documents} tasks={tasks} project={project} activityLogs={activityLogs} />
           </div>
         </div>
       </div>

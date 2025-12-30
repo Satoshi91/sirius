@@ -1,7 +1,6 @@
 import { initializeApp, getApps } from "firebase/app";
 import { getFirestore, collection, addDoc, Timestamp, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { mockProjects, mockDocuments } from "../lib/mockData";
-import { Project, ProjectDocument } from "../src/types";
+import { Project, Customer } from "../src/types";
 
 // Firebase設定（環境変数から読み込む、フォールバックとしてlib/firebase.tsの設定を使用）
 const firebaseConfig = {
@@ -20,41 +19,29 @@ if (!getApps().length) {
 const db = getFirestore();
 
 // 日付をFirebase Timestampに変換
-function toTimestamp(date: Date | null | undefined): Timestamp | null {
+function toTimestamp(date: Date | Timestamp | null | undefined): Timestamp | null {
   if (!date) return null;
+  if (date instanceof Timestamp) return date;
   return Timestamp.fromDate(date instanceof Date ? date : new Date(date));
 }
 
-// 古い形式のcategoryを新しい形式に変換
-function convertCategory(oldCategory: string | ProjectDocument["category"]): ProjectDocument["category"] {
-  if (typeof oldCategory !== "string") {
-    return oldCategory;
-  }
-  
-  const categoryMap: Record<string, ProjectDocument["category"]> = {
-    "本人書類": "personal",
-    "勤務先書類": "employer",
-    "作成書類": "office",
-    "公的機関書類": "government",
-  };
-  
-  return categoryMap[oldCategory] || "other";
-}
+// 古い形式のcategoryを新しい形式に変換（未使用のためコメントアウト）
+// function convertCategory(oldCategory: string | ProjectDocument["category"]): ProjectDocument["category"] {
+//   if (typeof oldCategory !== "string") {
+//     return oldCategory;
+//   }
+//   
+//   const categoryMap: Record<string, ProjectDocument["category"]> = {
+//     "本人書類": "personal",
+//     "勤務先書類": "employer",
+//     "作成書類": "office",
+//     "公的機関書類": "government",
+//   };
+//   
+//   return categoryMap[oldCategory] || "other";
+// }
 
-// 古い形式のstatusを新しい形式に変換
-function convertStatus(oldStatus: string | ProjectDocument["status"]): ProjectDocument["status"] {
-  if (typeof oldStatus !== "string") {
-    return oldStatus;
-  }
-  
-  const statusMap: Record<string, ProjectDocument["status"]> = {
-    "uploaded": "collected",
-    "verified": "verified",
-    "pending": "not_started",
-  };
-  
-  return statusMap[oldStatus] || (oldStatus as ProjectDocument["status"]);
-}
+// 古い形式のstatusを新しい形式に変換（未使用のため削除）
 
 // 既存データをクリア（オプション）
 async function clearExistingData() {
@@ -84,35 +71,112 @@ async function clearExistingData() {
   }
 }
 
-// 案件データを投入
-async function seedProjects(): Promise<Record<string, string>> {
-  console.log("案件データを投入中...");
+// シード用の顧客データ（seedFirebase.ts専用）
+const seedCustomersData: Omit<Customer, "id" | "createdAt" | "updatedAt">[] = [
+  { name: { last: { en: "Tanaka", ja: "田中", kana: "タナカ" }, first: { en: "Taro", ja: "太郎", kana: "タロウ" } }, nationality: "日本" },
+  { name: { last: { en: "Smith", ja: "", kana: "" }, first: { en: "John", ja: "", kana: "" } }, nationality: "アメリカ" },
+  { name: { last: { en: "Sato", ja: "佐藤", kana: "サトウ" }, first: { en: "Hanako", ja: "花子", kana: "ハナコ" } }, nationality: "日本" },
+  { name: { last: { en: "Li", ja: "李", kana: "" }, first: { en: "Xiaoming", ja: "小明", kana: "" } }, nationality: "中国" },
+  { name: { last: { en: "Park", ja: "", kana: "" }, first: { en: "Min-ji", ja: "", kana: "" } }, nationality: "韓国" },
+  { name: { last: { en: "Yamada", ja: "山田", kana: "ヤマダ" }, first: { en: "Jiro", ja: "次郎", kana: "ジロウ" } }, nationality: "日本" },
+  { name: { last: { en: "Nguyen", ja: "", kana: "" }, first: { en: "Van A", ja: "", kana: "" } }, nationality: "ベトナム" },
+  { name: { last: { en: "Garcia", ja: "", kana: "" }, first: { en: "Maria", ja: "", kana: "" } }, nationality: "フィリピン" },
+  { name: { last: { en: "Patel", ja: "", kana: "" }, first: { en: "Raj", ja: "", kana: "" } }, nationality: "インド" },
+  { name: { last: { en: "Suthipong", ja: "", kana: "" }, first: { en: "Somchai", ja: "", kana: "" } }, nationality: "タイ" },
+  { name: { last: { en: "Widodo", ja: "", kana: "" }, first: { en: "Budi", ja: "", kana: "" } }, nationality: "インドネシア" },
+  { name: { last: { en: "Chen", ja: "陳", kana: "" }, first: { en: "Wei", ja: "偉", kana: "" } }, nationality: "中国" },
+  { name: { last: { en: "Kim", ja: "", kana: "" }, first: { en: "Soo-jin", ja: "", kana: "" } }, nationality: "韓国" },
+  { name: { last: { en: "Williams", ja: "", kana: "" }, first: { en: "David", ja: "", kana: "" } }, nationality: "アメリカ" },
+  { name: { last: { en: "Tran", ja: "", kana: "" }, first: { en: "Thi B", ja: "", kana: "" } }, nationality: "ベトナム" },
+];
+
+// シード用の案件データ（seedFirebase.ts専用）
+const seedProjectsData: Omit<Project, "id" | "createdAt" | "updatedAt">[] = [
+  { title: "技術・人文知識・国際業務の申請", customerId: "", visaType: "技術・人文知識・国際業務", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "pending" },
+  { title: "経営・管理ビザの申請", customerId: "", visaType: "経営・管理", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "active" },
+  { title: "永住許可の申請", customerId: "", visaType: "永住許可", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "pending" },
+  { title: "留学ビザの申請", customerId: "", visaType: "留学", currentVisaType: "短期滞在", expiryDate: null, status: "pending" },
+  { title: "高度専門職ビザの申請", customerId: "", visaType: "高度専門職", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "active" },
+  { title: "家族滞在ビザの申請", customerId: "", visaType: "家族滞在", currentVisaType: "短期滞在", expiryDate: null, status: "completed" },
+  { title: "技能実習ビザの申請", customerId: "", visaType: "技能実習", currentVisaType: "短期滞在", expiryDate: null, status: "pending" },
+  { title: "定住者ビザの申請", customerId: "", visaType: "定住者", currentVisaType: "家族滞在", expiryDate: null, status: "active" },
+  { title: "技術・人文知識・国際業務の申請", customerId: "", visaType: "技術・人文知識・国際業務", currentVisaType: "留学", expiryDate: null, status: "pending" },
+  { title: "日本人の配偶者等ビザの申請", customerId: "", visaType: "日本人の配偶者等", currentVisaType: "短期滞在", expiryDate: null, status: "active" },
+  { title: "永住者の配偶者等ビザの申請", customerId: "", visaType: "永住者の配偶者等", currentVisaType: "定住者", expiryDate: null, status: "completed" },
+  { title: "特定活動ビザの申請", customerId: "", visaType: "特定活動", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "pending" },
+  { title: "技術・人文知識・国際業務の申請", customerId: "", visaType: "技術・人文知識・国際業務", currentVisaType: "留学", expiryDate: null, status: "active" },
+  { title: "経営・管理ビザの申請", customerId: "", visaType: "経営・管理", currentVisaType: "技術・人文知識・国際業務", expiryDate: null, status: "completed" },
+  { title: "定住者ビザの申請", customerId: "", visaType: "定住者", currentVisaType: "技能実習", expiryDate: null, status: "completed" },
+];
+
+// 顧客データを投入
+async function seedCustomers(): Promise<Record<number, string>> {
+  console.log("顧客データを投入中...");
   
-  const projectIdMap: Record<string, string> = {}; // 旧ID -> 新ID のマッピング
+  const customerIdMap: Record<number, string> = {}; // インデックス -> 顧客ID のマッピング
   
   try {
-    for (const project of mockProjects) {
+    for (let i = 0; i < seedCustomersData.length; i++) {
+      const customer = seedCustomersData[i];
+      const now = Timestamp.now();
+      
+      const customerData = {
+        name: customer.name,
+        nationality: customer.nationality,
+        birthday: customer.birthday ? toTimestamp(customer.birthday) : null,
+        gender: customer.gender || null,
+        residenceCardNumber: customer.residenceCardNumber || null,
+        email: customer.email || null,
+        phone: customer.phone || null,
+        address: customer.address || null,
+        notes: customer.notes || null,
+        createdAt: now,
+        updatedAt: now,
+      };
+      
+      const docRef = await addDoc(collection(db, "customers"), customerData);
+      customerIdMap[i] = docRef.id;
+      console.log(`  顧客を追加: ${customer.name} (${docRef.id})`);
+    }
+    
+    console.log(`✅ ${seedCustomersData.length}件の顧客を投入しました`);
+    return customerIdMap;
+  } catch (error) {
+    console.error("顧客データの投入中にエラーが発生しました:", error);
+    throw error;
+  }
+}
+
+// 案件データを投入
+async function seedProjects(customerIdMap: Record<number, string>): Promise<Record<number, string>> {
+  console.log("案件データを投入中...");
+  
+  const projectIdMap: Record<number, string> = {}; // インデックス -> 新ID のマッピング
+  
+  try {
+    for (let i = 0; i < seedProjectsData.length; i++) {
+      const project = seedProjectsData[i];
+      const customerId = customerIdMap[i] || customerIdMap[0]; // 対応する顧客ID、なければ最初の顧客
+      
       const projectData = {
         title: project.title,
-        name: project.name,
-        nameEnglish: project.nameEnglish || null,
-        nationality: project.nationality,
+        customerId: customerId,
         visaType: project.visaType,
         currentVisaType: project.currentVisaType || null,
         expiryDate: toTimestamp(project.expiryDate),
         status: project.status,
         organizationId: project.organizationId || null,
         createdBy: project.createdBy || null,
-        createdAt: toTimestamp(project.createdAt as Date) || Timestamp.now(),
-        updatedAt: toTimestamp(project.updatedAt as Date) || Timestamp.now(),
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
       };
       
       const docRef = await addDoc(collection(db, "projects"), projectData);
-      projectIdMap[project.id] = docRef.id;
-      console.log(`  案件を追加: ${project.name} (${docRef.id})`);
+      projectIdMap[i] = docRef.id;
+      console.log(`  案件を追加: ${project.title} (${docRef.id})`);
     }
     
-    console.log(`✅ ${mockProjects.length}件の案件を投入しました`);
+    console.log(`✅ ${seedProjectsData.length}件の案件を投入しました`);
     return projectIdMap;
   } catch (error) {
     console.error("案件データの投入中にエラーが発生しました:", error);
@@ -120,81 +184,17 @@ async function seedProjects(): Promise<Record<string, string>> {
   }
 }
 
-// 書類データを投入
+// 書類データを投入（オプション - 必要に応じて追加）
 async function seedDocuments(
-  projectIdMap: Record<string, string>,
-  documentIdMap: Record<string, string>
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _projectIdMap: Record<number, string>
 ) {
   console.log("書類データを投入中...");
   
-  let successCount = 0;
-  let errorCount = 0;
+  // 必要に応じて書類データを追加できます
+  // 現時点では空の実装
   
-  try {
-    for (const document of mockDocuments) {
-      const newProjectId = projectIdMap[document.projectId];
-      if (!newProjectId) {
-        console.warn(`  警告: 案件IDが見つかりません: ${document.projectId} (書類: ${document.name})`);
-        errorCount++;
-        continue;
-      }
-      
-      // 古い形式のデータを新しい形式に変換
-      const category = convertCategory(document.category as any);
-      const status = convertStatus(document.status as any);
-      
-      // デフォルト値の設定
-      const source = (document as any).source || "applicant";
-      const assignedTo = (document as any).assignedTo || "applicant";
-      
-      // canCreateAfterのIDを新IDに変換
-      let canCreateAfter: string[] | null = null;
-      if ((document as any).canCreateAfter && Array.isArray((document as any).canCreateAfter)) {
-        canCreateAfter = (document as any).canCreateAfter
-          .map((oldDocId: string) => documentIdMap[oldDocId])
-          .filter((newDocId: string | undefined) => newDocId !== undefined) as string[];
-        if (canCreateAfter.length === 0) {
-          canCreateAfter = null;
-        }
-      }
-      
-      const documentData: any = {
-        projectId: newProjectId,
-        name: document.name,
-        description: (document as any).description || null,
-        category: category,
-        source: source,
-        assignedTo: assignedTo,
-        year: (document as any).year || null,
-        era: (document as any).era || null,
-        eraYear: (document as any).eraYear || null,
-        period: (document as any).period || null,
-        status: status,
-        isRequiredOriginal: (document as any).isRequiredOriginal ?? false,
-        dependsOn: (document as any).dependsOn || null,
-        canCreateAfter: canCreateAfter,
-        instructions: (document as any).instructions || null,
-        requirements: (document as any).requirements || null,
-        notes: (document as any).notes || null,
-        fileUrl: (document as any).fileUrl || null,
-        storagePath: (document as any).storagePath || null,
-        createdAt: toTimestamp(document.createdAt as Date) || Timestamp.now(),
-        updatedAt: (document as any).updatedAt ? toTimestamp((document as any).updatedAt as Date) : null,
-      };
-      
-      const docRef = await addDoc(collection(db, `projects/${newProjectId}/documents`), documentData);
-      documentIdMap[document.id] = docRef.id;
-      successCount++;
-    }
-    
-    console.log(`✅ ${successCount}件の書類を投入しました`);
-    if (errorCount > 0) {
-      console.warn(`⚠️  ${errorCount}件の書類の投入に失敗しました`);
-    }
-  } catch (error) {
-    console.error("書類データの投入中にエラーが発生しました:", error);
-    throw error;
-  }
+  console.log("✅ 書類データの投入をスキップしました（必要に応じて実装してください）");
 }
 
 // メイン処理
@@ -208,12 +208,14 @@ async function main() {
       await clearExistingData();
     }
     
-    // 案件データを投入
-    const projectIdMap = await seedProjects();
+    // 顧客データを投入
+    const customerIdMap = await seedCustomers();
     
-    // 書類データを投入（書類IDマッピングも作成）
-    const documentIdMap: Record<string, string> = {};
-    await seedDocuments(projectIdMap, documentIdMap);
+    // 案件データを投入
+    const projectIdMap = await seedProjects(customerIdMap);
+    
+    // 書類データを投入
+    await seedDocuments(projectIdMap);
     
     console.log("✅ シード処理が完了しました");
     process.exit(0);

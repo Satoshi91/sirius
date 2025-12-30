@@ -1,4 +1,4 @@
-import { collection, getDocs, query, orderBy, addDoc, Timestamp, getDoc, doc, updateDoc, setDoc } from "firebase/firestore";
+import { collection, getDocs, query, orderBy, Timestamp, getDoc, doc, updateDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { User } from "@/types";
 
@@ -64,7 +64,7 @@ export async function createUserProfile(
     const userRef = doc(db, "users", normalizedEmail);
     const now = Timestamp.now();
     
-    const userData: any = {
+    const userData: Record<string, unknown> = {
       email: normalizedEmail,
       displayName: data.displayName,
       role: data.role || 'staff',
@@ -96,7 +96,7 @@ export async function updateUser(
     const userRef = doc(db, "users", normalizedEmail);
     const now = Timestamp.now();
     
-    const updateData: any = {
+    const updateData: Record<string, unknown> = {
       updatedAt: now,
     };
     

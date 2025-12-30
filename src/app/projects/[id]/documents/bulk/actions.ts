@@ -18,14 +18,8 @@ export async function bulkCreateDocumentsAction(
   // 認証チェック
   await requireAuth();
   
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:12',message:'bulkCreateDocumentsAction entry',data:{projectId,documentsCount:documents?.length,firstDoc:documents?.[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  // #endregion
   // バリデーション
   if (!documents || documents.length === 0) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:18',message:'Validation failed: empty documents',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-    // #endregion
     return { error: "書類が選択されていません" };
   }
 
@@ -34,37 +28,22 @@ export async function bulkCreateDocumentsAction(
     const doc = documents[i];
     
     if (!doc.name || !doc.name.trim()) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:26',message:'Validation failed: missing name',data:{index:i,doc},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return { error: `${i + 1}件目の書類名は必須です` };
     }
 
     if (!doc.category || !['personal', 'employer', 'office', 'government', 'other'].includes(doc.category)) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:30',message:'Validation failed: invalid category',data:{index:i,category:doc.category},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return { error: `${i + 1}件目のカテゴリーは必須です` };
     }
 
     if (!doc.source || !['office', 'applicant', 'employer', 'government', 'guarantor', 'other'].includes(doc.source)) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:34',message:'Validation failed: invalid source',data:{index:i,source:doc.source},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return { error: `${i + 1}件目の取得元は必須です` };
     }
 
     if (!doc.assignedTo || !['office', 'applicant'].includes(doc.assignedTo)) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:38',message:'Validation failed: invalid assignedTo',data:{index:i,assignedTo:doc.assignedTo},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return { error: `${i + 1}件目の担当は必須です` };
     }
 
     if (!doc.status || !['not_started', 'in_progress', 'waiting', 'collected', 'verified', 'completed'].includes(doc.status)) {
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:42',message:'Validation failed: invalid status',data:{index:i,status:doc.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'E'})}).catch(()=>{});
-      // #endregion
       return { error: `${i + 1}件目のステータスは必須です` };
     }
   }
@@ -76,13 +55,7 @@ export async function bulkCreateDocumentsAction(
       projectId,
     }));
 
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:53',message:'Before bulkCreateDocuments call',data:{projectId,documentsCount:documentsWithProjectId.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
     await bulkCreateDocuments(projectId, documentsWithProjectId);
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:54',message:'After bulkCreateDocuments call',data:{projectId,documentsCount:documents.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    // #endregion
 
     // 操作履歴を記録
     try {
@@ -105,9 +78,6 @@ export async function bulkCreateDocumentsAction(
 
     return { success: true, count: documents.length };
   } catch (error) {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'actions.ts:56',message:'Error in bulkCreateDocumentsAction',data:{error:String(error),errorStack:error instanceof Error?error.stack:undefined},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-    // #endregion
     console.error("Error bulk creating documents:", error);
     return { error: "書類の一括作成に失敗しました。もう一度お試しください。" };
   }

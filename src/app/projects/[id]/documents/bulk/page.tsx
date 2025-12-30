@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Project, ProjectDocument } from "@/types";
 import { Timestamp } from "firebase/firestore";
 import { documentMasterList } from "@/lib/masters/documentMaster";
+import { getFullNameJa, getFullNameEn } from "@/lib/utils/customerName";
 import { getDocuments } from "@/lib/services/documentService";
 import { getProject } from "@/lib/services/projectService";
 import DocumentMasterSelector from "./components/DocumentMasterSelector";
@@ -101,9 +102,6 @@ export default function BulkDocumentPage() {
   }, [selectedMasterIds, existingDocuments]);
 
   const handleConfirm = async () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:78',message:'handleConfirm entry',data:{projectId,toAddCount:changes.toAdd.length,toDeleteCount:changes.toDelete.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-    // #endregion
     if (changes.toAdd.length === 0 && changes.toDelete.length === 0) {
       toast.info("変更がありません");
       return;
@@ -124,13 +122,7 @@ export default function BulkDocumentPage() {
           masterDocumentId: masterItem.id,
         }));
 
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:99',message:'Before bulkCreateDocumentsAction',data:{projectId,documentsCount:documentsToAdd.length,firstDoc:documentsToAdd[0]},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-        // #endregion
         const createResult = await bulkCreateDocumentsAction(projectId, documentsToAdd);
-        // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:102',message:'After bulkCreateDocumentsAction',data:{result:createResult,hasError:!!createResult?.error},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-        // #endregion
         if (createResult?.error) {
           toast.error(createResult.error);
           setIsSubmitting(false);
@@ -162,9 +154,6 @@ export default function BulkDocumentPage() {
       } else if (deleteCount > 0) {
         message = `${deleteCount}件の書類を削除しました`;
       }
-      // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'page.tsx:131',message:'Before redirect',data:{addCount,deleteCount,message},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
       toast.success(message);
 
       // 案件詳細ページに遷移
@@ -245,17 +234,17 @@ export default function BulkDocumentPage() {
 
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 mb-1">氏名（漢字）</h3>
-                        <p className="text-black font-medium">{project.name}</p>
+                        <p className="text-black font-medium">{project.customer ? getFullNameJa(project.customer) || "-" : "-"}</p>
                       </div>
 
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 mb-1">氏名（英語）</h3>
-                        <p className="text-black">{project.nameEnglish || "-"}</p>
+                        <p className="text-black">{project.customer ? getFullNameEn(project.customer) || "-" : "-"}</p>
                       </div>
 
                       <div>
                         <h3 className="text-sm font-semibold text-gray-700 mb-1">国籍</h3>
-                        <p className="text-black">{project.nationality}</p>
+                        <p className="text-black">{project.customer?.nationality || "-"}</p>
                       </div>
 
                       <div>

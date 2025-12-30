@@ -64,10 +64,14 @@ export default function ProjectList({ projects }: ProjectListProps) {
                 </Link>
               </td>
               <td className="px-4 py-3 text-zinc-700">
-                {project.name}
+                {project.customer ? (project.customer.name.last.ja && project.customer.name.first.ja 
+                  ? `${project.customer.name.last.ja} ${project.customer.name.first.ja}` 
+                  : project.customer.name.last.en && project.customer.name.first.en
+                  ? `${project.customer.name.last.en} ${project.customer.name.first.en}`
+                  : "-") : "-"}
               </td>
               <td className="px-4 py-3 text-zinc-700">
-                {project.nationality}
+                {project.customer?.nationality || "-"}
               </td>
               <td className="px-4 py-3 text-zinc-700">
                 {project.visaType}

@@ -1,0 +1,44 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ヘルパー関数: 認証済みかチェック
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // ヘルパー関数: ユーザーのroleを取得
+    function getUserRole() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.role;
+    }
+    
+    // ヘルパー関数: adminかチェック
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    // ヘルパー関数: ユーザーが有効かチェック
+    function isUserActive() {
+      return isAuthenticated() && 
+             firestore.exists(/databases/(default)/documents/users/$(request.auth.token.email)) &&
+             firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.isActive == true;
+    }
+    
+    // projects/{projectId}/documents/* パス: 認証済みかつ有効なユーザーのみ読み書き可能
+    match /projects/{projectId}/documents/{fileName} {
+      allow read: if isUserActive();
+      allow write: if isUserActive();
+    }
+    
+    // customers/{customerId}/documents/* パス: 認証済みかつ有効なユーザーのみ読み書き可能
+    match /customers/{customerId}/documents/{fileName} {
+      allow read: if isUserActive();
+      allow write: if isUserActive();
+    }
+    
+    // その他のパスへのアクセスは拒否
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { PROJECT_STATUS_OPTIONS } from "@/types";
 
 interface SearchFilterProps {
   searchQuery: string;
@@ -53,9 +54,11 @@ export default function SearchFilter({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">全て</SelectItem>
-              <SelectItem value="pending">準備中</SelectItem>
-              <SelectItem value="active">申請中</SelectItem>
-              <SelectItem value="completed">完了</SelectItem>
+              {PROJECT_STATUS_OPTIONS.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>

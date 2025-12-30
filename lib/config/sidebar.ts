@@ -11,6 +11,14 @@ export const sidebarMenuItems: SidebarMenuItem[] = [
     href: "/projects",
   },
   {
+    label: "顧客管理",
+    href: "/customers",
+  },
+  {
+    label: "期限管理カレンダー",
+    href: "/calendar",
+  },
+  {
     label: "職員管理",
     href: "/users",
   },

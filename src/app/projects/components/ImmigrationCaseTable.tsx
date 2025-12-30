@@ -1,6 +1,6 @@
 "use client";
 
-import { Project } from "@/types";
+import { Project, PROJECT_STATUS_LABELS } from "@/types";
 import {
   Table,
   TableBody,
@@ -13,7 +13,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { AlertCircle, Eye } from "lucide-react";
+import { getDisplayName, getFullNameEn } from "@/lib/utils/customerName";
 import { Timestamp } from "firebase/firestore";
+import PaymentStatusToggle from "./PaymentStatusToggle";
 
 interface ImmigrationCaseTableProps {
   projects: Project[];
@@ -25,16 +27,6 @@ export default function ImmigrationCaseTable({
   const now = new Date();
   const sevenDaysLater = new Date(now);
   sevenDaysLater.setDate(now.getDate() + 7);
-
-  const formatDate = (date: Date | Timestamp | null | undefined): string => {
-    if (!date) return "-";
-    const dateObj = date instanceof Date ? date : (date as Timestamp).toDate();
-    return dateObj.toLocaleDateString("ja-JP", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   const formatShortDate = (date: Date | Timestamp | null | undefined): string => {
     if (!date) return "-";
@@ -59,19 +51,6 @@ export default function ImmigrationCaseTable({
     return "outline";
   };
 
-  const getStatusLabel = (status: 'active' | 'pending' | 'completed'): string => {
-    switch (status) {
-      case 'active':
-        return '申請中';
-      case 'pending':
-        return '準備中';
-      case 'completed':
-        return '完了';
-      default:
-        return status;
-    }
-  };
-
   if (projects.length === 0) {
     return (
       <div className="text-center py-12">
@@ -91,6 +70,7 @@ export default function ImmigrationCaseTable({
             <TableHead className="w-[100px]">国籍</TableHead>
             <TableHead className="w-[150px]">ビザの種類</TableHead>
             <TableHead className="w-[120px]">進捗ステータス</TableHead>
+            <TableHead className="w-[120px]">入金ステータス</TableHead>
             <TableHead className="w-[150px]">最終更新日</TableHead>
             <TableHead className="w-[100px] text-right">操作</TableHead>
           </TableRow>
@@ -129,21 +109,25 @@ export default function ImmigrationCaseTable({
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div>
-                    <div className="font-medium text-black">
-                      {project.name}
-                    </div>
-                    {project.nameEnglish && (
-                      <div className="text-sm text-black">
-                        {project.nameEnglish}
+                  {project.customer ? (
+                    <div>
+                      <div className="font-medium text-black">
+                        {getDisplayName(project.customer)}
                       </div>
-                    )}
-                  </div>
+                      {getFullNameEn(project.customer) && (
+                        <div className="text-sm text-black">
+                          {getFullNameEn(project.customer)}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-700">-</span>
+                  )}
                 </TableCell>
                 <TableCell>
-                  {project.nationality ? (
+                  {project.customer?.nationality ? (
                     <Badge variant="outline" className="bg-blue-50 border-blue-200 text-gray-700">
-                      {project.nationality}
+                      {project.customer.nationality}
                     </Badge>
                   ) : (
                     <span className="text-gray-700">-</span>
@@ -161,8 +145,11 @@ export default function ImmigrationCaseTable({
                     variant={getStatusBadgeVariant(project.status)}
                     className={getStatusBadgeVariant(project.status) === "outline" ? "text-gray-700" : ""}
                   >
-                    {getStatusLabel(project.status)}
+                    {PROJECT_STATUS_LABELS[project.status]}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <PaymentStatusToggle project={project} />
                 </TableCell>
                 <TableCell className="text-gray-700">
                   {formatShortDate(updatedAt)}

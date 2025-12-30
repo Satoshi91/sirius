@@ -307,7 +307,7 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
                                 {!document.fileUrl && (
                                   <>
                                     <input
-                                      ref={(el) => (fileInputRefs.current[document.id] = el)}
+                                      ref={(el) => { fileInputRefs.current[document.id] = el; }}
                                       type="file"
                                       className="hidden"
                                       onChange={(e) => handleFileChange(document.id, e)}
@@ -335,7 +335,7 @@ export default function DocumentList({ projectId, documents }: DocumentListProps
                                 {document.fileUrl && (
                                   <>
                                     <input
-                                      ref={(el) => (fileInputRefs.current[document.id] = el)}
+                                      ref={(el) => { fileInputRefs.current[document.id] = el; }}
                                       type="file"
                                       className="hidden"
                                       onChange={(e) => handleFileChange(document.id, e)}

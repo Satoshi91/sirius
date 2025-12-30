@@ -79,7 +79,7 @@ export default function ProjectActions({ project }: ProjectActionsProps) {
         onClose={handleCloseDeleteConfirm}
         onConfirm={handleDeleteConfirm}
         title="案件の削除"
-        message={`案件「${project.name}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
+        message={`案件「${project.title}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
         confirmText="削除"
         cancelText="キャンセル"
         variant="destructive"

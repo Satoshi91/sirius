@@ -5,7 +5,7 @@ import { User } from "@/types";
 import UserList from "./UserList";
 import UserForm from "./UserForm";
 import { Button } from "@/components/ui/button";
-import { Plus, X } from "lucide-react";
+import { Plus } from "lucide-react";
 import Modal from "@/components/Modal";
 import {
   createUserAction,
@@ -28,7 +28,7 @@ export default function UsersPageClient({
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | undefined>();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   const handleCreate = () => {
     setEditingUser(undefined);

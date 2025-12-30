@@ -2,8 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Project } from "@/types";
+import { Project, PROJECT_STATUS_OPTIONS } from "@/types";
+import { Timestamp } from "firebase/firestore";
 import { updateProjectAction } from "../actions";
+import CustomerSelector from "./CustomerSelector";
 
 interface ProjectEditFormProps {
   project: Project;
@@ -18,21 +20,21 @@ export default function ProjectEditForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(project.customerId || null);
   
   // 日付をYYYY-MM-DD形式に変換
-  const formatDateForInput = (date: Date | null | undefined): string => {
+  const formatDateForInput = (date: Date | Timestamp | null | undefined): string => {
     if (!date) return "";
-    const dateObj = date instanceof Date ? date : new Date(date);
+    const dateObj = date instanceof Timestamp ? date.toDate() : date instanceof Date ? date : new Date(date);
     return dateObj.toISOString().split("T")[0];
   };
 
   const [formData, setFormData] = useState({
     title: project.title,
-    name: project.name,
-    nationality: project.nationality,
     visaType: project.visaType,
     expiryDate: formatDateForInput(project.expiryDate),
     status: project.status,
+    paymentStatus: project.paymentStatus || '',
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -45,11 +47,8 @@ export default function ProjectEditForm({
     if (!formData.title.trim()) {
       newErrors.title = "案件名は必須です";
     }
-    if (!formData.name.trim()) {
-      newErrors.name = "氏名は必須です";
-    }
-    if (!formData.nationality.trim()) {
-      newErrors.nationality = "国籍は必須です";
+    if (!selectedCustomerId) {
+      newErrors.customerId = "顧客は必須です";
     }
     if (!formData.visaType.trim()) {
       newErrors.visaType = "在留資格は必須です";
@@ -61,11 +60,13 @@ export default function ProjectEditForm({
 
     const formDataToSubmit = new FormData();
     formDataToSubmit.append("title", formData.title);
-    formDataToSubmit.append("name", formData.name);
-    formDataToSubmit.append("nationality", formData.nationality);
+    formDataToSubmit.append("customerId", selectedCustomerId!);
     formDataToSubmit.append("visaType", formData.visaType);
     formDataToSubmit.append("expiryDate", formData.expiryDate);
     formDataToSubmit.append("status", formData.status);
+    if (formData.paymentStatus) {
+      formDataToSubmit.append("paymentStatus", formData.paymentStatus);
+    }
 
     startTransition(async () => {
       const result = await updateProjectAction(project.id, formDataToSubmit);
@@ -123,55 +124,11 @@ export default function ProjectEditForm({
         )}
       </div>
 
-      <div>
-        <label
-          htmlFor="name"
-          className="block text-sm font-medium text-black mb-2"
-        >
-          氏名 <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
-            fieldErrors.name
-              ? "border-red-500"
-              : "border-zinc-200 focus:border-black"
-          }`}
-          placeholder="氏名を入力"
-        />
-        {fieldErrors.name && (
-          <p className="mt-1 text-sm text-red-500">{fieldErrors.name}</p>
-        )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="nationality"
-          className="block text-sm font-medium text-black mb-2"
-        >
-          国籍 <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="text"
-          id="nationality"
-          name="nationality"
-          value={formData.nationality}
-          onChange={handleChange}
-          className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
-            fieldErrors.nationality
-              ? "border-red-500"
-              : "border-zinc-200 focus:border-black"
-          }`}
-          placeholder="国籍を入力"
-        />
-        {fieldErrors.nationality && (
-          <p className="mt-1 text-sm text-red-500">{fieldErrors.nationality}</p>
-        )}
-      </div>
+      <CustomerSelector
+        selectedCustomerId={selectedCustomerId}
+        onSelectCustomer={setSelectedCustomerId}
+        error={fieldErrors.customerId}
+      />
 
       <div>
         <label
@@ -229,9 +186,32 @@ export default function ProjectEditForm({
           onChange={handleChange}
           className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
         >
-          <option value="pending">保留中</option>
-          <option value="active">進行中</option>
-          <option value="completed">完了</option>
+          {PROJECT_STATUS_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label
+          htmlFor="paymentStatus"
+          className="block text-sm font-medium text-black mb-2"
+        >
+          入金ステータス
+        </label>
+        <select
+          id="paymentStatus"
+          name="paymentStatus"
+          value={formData.paymentStatus}
+          onChange={handleChange}
+          className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+        >
+          <option value="">未設定</option>
+          <option value="unclaimed">未請求</option>
+          <option value="claimed">請求済み</option>
+          <option value="paid">入金済み</option>
         </select>
       </div>
 

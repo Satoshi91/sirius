@@ -33,11 +33,18 @@ export default function ProjectsPageClient({
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       result = result.filter((project) => {
-        const nameMatch = project.name?.toLowerCase().includes(query);
-        const nameEnglishMatch = project.nameEnglish?.toLowerCase().includes(query);
-        const nationalityMatch = project.nationality?.toLowerCase().includes(query);
+        if (!project.customer) return false;
+        const customer = project.customer;
+        const nameJa = customer.name.last.ja && customer.name.first.ja 
+          ? `${customer.name.last.ja} ${customer.name.first.ja}`.toLowerCase()
+          : "";
+        const nameEn = customer.name.last.en && customer.name.first.en
+          ? `${customer.name.last.en} ${customer.name.first.en}`.toLowerCase()
+          : "";
+        const nameMatch = nameJa.includes(query) || nameEn.includes(query);
+        const nationalityMatch = customer.nationality?.toLowerCase().includes(query);
         
-        return nameMatch || nameEnglishMatch || nationalityMatch;
+        return nameMatch || nationalityMatch;
       });
     }
 

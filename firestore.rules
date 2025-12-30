@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ヘルパー関数: 認証済みかチェック
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // ヘルパー関数: ユーザーのroleを取得
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.role;
+    }
+    
+    // ヘルパー関数: adminかチェック
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    // ヘルパー関数: ユーザーが有効かチェック
+    function isUserActive() {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/users/$(request.auth.token.email)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.token.email)).data.isActive == true;
+    }
+    
+    // usersコレクション: adminのみ読み書き可能
+    match /users/{userId} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // projectsコレクション: 認証済みかつ有効なユーザーのみ読み書き可能
+    match /projects/{projectId} {
+      allow read: if isUserActive();
+      allow create: if isUserActive();
+      allow update: if isUserActive();
+      allow delete: if isUserActive();
+      
+      // documentsサブコレクション: 認証済みかつ有効なユーザーのみ読み書き可能
+      match /documents/{documentId} {
+        allow read: if isUserActive();
+        allow create: if isUserActive();
+        allow update: if isUserActive();
+        allow delete: if isUserActive();
+      }
+      
+      // activityLogsサブコレクション: 認証済みかつ有効なユーザーのみ読み取り可能
+      // 書き込みはサーバー側（Firebase Admin SDK）のみ許可
+      match /activityLogs/{logId} {
+        allow read: if isUserActive();
+        allow create: if false; // クライアント側からの書き込みは禁止
+        allow update: if false; // クライアント側からの更新は禁止
+        allow delete: if false; // クライアント側からの削除は禁止
+      }
+    }
+    
+    // その他のコレクションへのアクセスは拒否
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

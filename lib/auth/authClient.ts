@@ -2,8 +2,6 @@
 
 import { auth } from "@/lib/firebase";
 import { User as FirebaseUser, onAuthStateChanged, signOut as firebaseSignOut } from "firebase/auth";
-import { User } from "@/types";
-import { getUser } from "@/lib/services/userService";
 
 /**
  * 認証状態の変更を監視

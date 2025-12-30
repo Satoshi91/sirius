@@ -1,20 +1,111 @@
 import { Timestamp } from 'firebase/firestore';
 
 /**
+ * メモ（Note）の型定義
+ * 顧客・案件の時系列メモ機能で使用
+ */
+export interface Note {
+  id: string;
+  content: string;
+  createdAt: Date | Timestamp;
+  authorName: string;
+}
+
+/**
+ * 顧客重要書類（CustomerDocument）の型定義
+ */
+export interface CustomerDocument {
+  id: string;                      // 一意のID（UUID）
+  label: string;                   // ラベル（例：「パスポート」「在留カード表面」「在留カード裏面」）
+  fileUrl: string;                 // Firebase StorageのダウンロードURL
+  storagePath: string;             // Storage内のパス
+  fileName: string;                // 元のファイル名
+  uploadedAt: Date | Timestamp;   // アップロード日時
+}
+
+/**
+ * 顧客（Customer）の型定義
+ * マスターデータ：その人自身の不変情報
+ */
+export interface Customer {
+  id: string;
+  // 姓名オブジェクト（3形式 × 姓名）
+  // ミドルネームは first.en に「名 + ミドルネーム」をまとめて入力する運用
+  name: {
+    last: {
+      en: string;                  // 姓（アルファベット/パスポート表記）
+      ja: string;                  // 姓（漢字）
+      kana: string;                // 姓（カタカナ）
+    };
+    first: {
+      en: string;                  // 名（アルファベット/ミドルネーム含む）
+      ja: string;                  // 名（漢字）
+      kana: string;                // 名（カタカナ）
+    };
+  };
+  // 基本属性
+  nationality: string;             // 国籍（必須）
+  birthday?: Date | Timestamp | null;  // 生年月日
+  gender?: string | null;          // 性別
+  // 在留カード情報
+  residenceCardNumber?: string | null;  // 在留カード番号（最新のものをマスターで保持）
+  // 連絡先
+  email?: string;                  // メールアドレス（オプション）
+  phone?: string;                  // 電話番号（オプション）
+  address?: string;                // 住所（オプション）
+  // その他
+  notes?: string;                  // 備考・メモ（オプション）
+  chatNotes?: Note[];              // 時系列メモ（チャット形式）（オプション）
+  // 重要書類
+  documents?: CustomerDocument[];  // 重要書類の画像配列（パスポート、在留カード等）
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
+}
+
+/**
+ * 案件ステータスの型定義
+ */
+export type ProjectStatus = 'active' | 'pending' | 'completed';
+
+/**
+ * 案件ステータスのラベルマッピング
+ */
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {
+  active: '申請中',
+  pending: '準備中',
+  completed: '完了',
+} as const;
+
+/**
+ * 案件ステータスのオプション配列（フィルターなどで使用）
+ */
+export const PROJECT_STATUS_OPTIONS: Array<{ value: ProjectStatus; label: string }> = 
+  Object.entries(PROJECT_STATUS_LABELS).map(([value, label]) => ({
+    value: value as ProjectStatus,
+    label,
+  }));
+
+/**
  * 案件（Project）のマスタ型定義
  */
 export interface Project {
   id: string;
   title: string;                   // 案件名（必須）
-  name: string;                    // 氏名（必須）
-  nameEnglish?: string;            // 英語名（オプション、モックデータのenglishNameに相当）
-  nationality: string;             // 国籍（必須）
+  customerId: string;              // 顧客ID（必須）
+  customer?: Customer;             // 顧客情報（オプション、サービス層で取得した顧客情報を格納）
+  // 申請情報
   visaType: string;                // 申請する在留資格（必須）
-  currentVisaType?: string;        // 現在の在留資格（オプション）
-  expiryDate: Date | Timestamp | null;  // 有効期限（モックデータのdeadlineに相当）
-  status: 'active' | 'pending' | 'completed';  // 統一されたステータス
+  currentVisaType?: string;        // 申請時の在留資格（履歴として保持）
+  expiryDate: Date | Timestamp | null;  // 申請の結果、新しく許可された在留期限
+  applicationDate?: Date | Timestamp | null;  // 申請日
+  // 進捗管理
+  status: ProjectStatus;  // 統一されたステータス
+  // 入金管理
+  paymentStatus?: 'unclaimed' | 'claimed' | 'paid';  // 入金ステータス
+  // その他
   organizationId?: string;         // 事務所ID（将来用、オプション）
   createdBy?: string;              // 担当者UID（将来用、オプション）
+  notes?: Note[];                  // 時系列メモ（チャット形式）（オプション）
   createdAt: Date | Timestamp;
   updatedAt: Date | Timestamp;
 }
@@ -96,6 +187,69 @@ export interface User {
 }
 
 /**
+ * タスク（Task）の型定義
+ * 案件に関連する具体的な作業やプロセスを管理
+ */
+export interface Task {
+  id: string;
+  title: string;                         // タスク名（必須）
+  description?: string;                   // 詳細メモ
+  assigneeId?: string;                   // 担当者のユーザーID（メールアドレス）
+  status: 'todo' | 'in_progress' | 'awaiting_approval' | 'completed';
+  priority: 'high' | 'medium' | 'low';
+  dueDate?: Date | Timestamp | null;      // 期限
+  createdAt: Date | Timestamp;
+  updatedAt: Date | Timestamp;
+}
+
+/**
+ * タスクステータスの型定義
+ */
+export type TaskStatus = 'todo' | 'in_progress' | 'awaiting_approval' | 'completed';
+
+/**
+ * タスクステータスのラベルマッピング
+ */
+export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
+  todo: '未着手',
+  in_progress: '進行中',
+  awaiting_approval: '承認待ち',
+  completed: '完了',
+} as const;
+
+/**
+ * タスクステータスのオプション配列
+ */
+export const TASK_STATUS_OPTIONS: Array<{ value: TaskStatus; label: string }> = 
+  Object.entries(TASK_STATUS_LABELS).map(([value, label]) => ({
+    value: value as TaskStatus,
+    label,
+  }));
+
+/**
+ * タスク優先度の型定義
+ */
+export type TaskPriority = 'high' | 'medium' | 'low';
+
+/**
+ * タスク優先度のラベルマッピング
+ */
+export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
+  high: '高',
+  medium: '中',
+  low: '低',
+} as const;
+
+/**
+ * タスク優先度のオプション配列
+ */
+export const TASK_PRIORITY_OPTIONS: Array<{ value: TaskPriority; label: string }> = 
+  Object.entries(TASK_PRIORITY_LABELS).map(([value, label]) => ({
+    value: value as TaskPriority,
+    label,
+  }));
+
+/**
  * 案件操作履歴の型定義
  */
 export interface ProjectActivityLog {
@@ -110,7 +264,10 @@ export interface ProjectActivityLog {
     | 'document_deleted'                 // 書類削除
     | 'document_file_uploaded'           // 書類ファイルアップロード
     | 'documents_bulk_created'           // 書類一括作成
-    | 'documents_bulk_deleted';          // 書類一括削除
+    | 'documents_bulk_deleted'           // 書類一括削除
+    | 'task_created'                     // タスク作成
+    | 'task_updated'                     // タスク更新
+    | 'task_deleted';                    // タスク削除
   description: string;                   // 操作の説明（例: "案件情報を更新しました"）
   details?: {                            // 操作の詳細情報（任意）
     field?: string;                      // 変更されたフィールド名
@@ -118,6 +275,8 @@ export interface ProjectActivityLog {
     newValue?: string | number | null;   // 変更後の値
     documentId?: string;                 // 関連する書類ID
     documentName?: string;               // 関連する書類名
+    taskId?: string;                     // 関連するタスクID
+    taskTitle?: string;                  // 関連するタスク名
     count?: number;                      // 一括操作の件数
     documentNames?: string[];            // 書類名の配列（一括削除時など）
     fileName?: string;                   // ファイル名
@@ -127,6 +286,7 @@ export interface ProjectActivityLog {
     visaType?: { oldValue?: string | null; newValue?: string | null };     // 在留資格の変更
     expiryDate?: { oldValue?: string | null; newValue?: string | null };   // 在留期限の変更
     status?: { oldValue?: string | null; newValue?: string | null };       // ステータスの変更
+    paymentStatus?: { oldValue?: string | null; newValue?: string | null };  // 入金ステータスの変更
   };
   performedBy: string;                   // 実行したユーザーのメールアドレス
   performedByName?: string;              // 実行したユーザーの表示名（オプション）

@@ -5,16 +5,13 @@ import {
   orderBy, 
   addDoc, 
   serverTimestamp,
-  Timestamp,
   writeBatch,
   doc,
-  updateDoc,
-  deleteDoc
+  updateDoc
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../firebase";
 import { ProjectDocument } from "@/types";
-import { mockDocuments } from "../mockData";
 
 /**
  * 案件に関連する書類をCloud Storageにアップロードし、Firestoreにメタデータを保存する
@@ -177,35 +174,6 @@ export async function createDocument(
   projectId: string,
   data: Omit<ProjectDocument, "id" | "createdAt" | "updatedAt" | "fileUrl" | "storagePath">
 ): Promise<string> {
-  // TODO: Firebase接続時にコメントアウトを外してモックデータ部分をコメントアウトする
-  // モックデータに追加（デバッグ用）
-  const newId = `mock-doc-${Date.now()}`;
-  const newDocument: ProjectDocument = {
-    id: newId,
-    projectId: projectId,
-    name: data.name,
-    description: data.description,
-    category: data.category,
-    source: data.source,
-    assignedTo: data.assignedTo,
-    year: data.year,
-    era: data.era,
-    eraYear: data.eraYear,
-    period: data.period,
-    status: data.status,
-    isRequiredOriginal: data.isRequiredOriginal,
-    dependsOn: data.dependsOn,
-    canCreateAfter: data.canCreateAfter,
-    instructions: data.instructions,
-    requirements: data.requirements,
-    notes: data.notes,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-  mockDocuments.push(newDocument);
-  return newId;
-
-  /* Firebase接続時は以下のコードを有効化
   try {
     const documentsRef = collection(db, `projects/${projectId}/documents`);
     const now = serverTimestamp();
@@ -238,7 +206,6 @@ export async function createDocument(
     console.error("Error creating document:", error);
     throw error;
   }
-  */
 }
 
 /**

@@ -3,14 +3,24 @@
 import { createProject } from "@/lib/services/projectService";
 import { createActivityLog } from "@/lib/services/activityLogService";
 import { requireAuth, getCurrentUser } from "@/lib/auth/auth";
+import { searchCustomers } from "@/lib/services/customerService";
+
+export async function searchCustomersAction(query: string) {
+  await requireAuth();
+  try {
+    const customers = await searchCustomers(query);
+    return { customers };
+  } catch (error) {
+    console.error("Error searching customers:", error);
+    return { customers: [] };
+  }
+}
 
 export async function createProjectAction(formData: FormData) {
   // 認証チェック
   await requireAuth();
   const title = formData.get("title") as string;
-  const name = formData.get("name") as string;
-  const nameEnglish = formData.get("nameEnglish") as string | null;
-  const nationality = formData.get("nationality") as string;
+  const customerId = formData.get("customerId") as string;
   const currentVisaType = formData.get("currentVisaType") as string | null;
   const visaType = formData.get("visaType") as string;
   const expiryDate = formData.get("expiryDate") as string | null;
@@ -19,11 +29,8 @@ export async function createProjectAction(formData: FormData) {
   if (!title || !title.trim()) {
     return { error: "案件名は必須です" };
   }
-  if (!name || !name.trim()) {
-    return { error: "氏名は必須です" };
-  }
-  if (!nationality || !nationality.trim()) {
-    return { error: "国籍は必須です" };
+  if (!customerId || !customerId.trim()) {
+    return { error: "顧客は必須です" };
   }
   if (!visaType || !visaType.trim()) {
     return { error: "在留資格は必須です" };
@@ -32,9 +39,7 @@ export async function createProjectAction(formData: FormData) {
   try {
     const projectId = await createProject({
       title: title.trim(),
-      name: name.trim(),
-      nameEnglish: nameEnglish?.trim() || undefined,
-      nationality: nationality.trim(),
+      customerId: customerId.trim(),
       currentVisaType: currentVisaType?.trim() || undefined,
       visaType: visaType.trim(),
       expiryDate: expiryDate ? new Date(expiryDate) : null,

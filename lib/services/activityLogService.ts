@@ -4,8 +4,7 @@ import {
   query, 
   orderBy, 
   addDoc, 
-  serverTimestamp,
-  Timestamp
+  serverTimestamp
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { ProjectActivityLog } from "@/types";

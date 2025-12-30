@@ -1,4 +1,4 @@
-import { ProjectDocument } from "@/types";
+// documentMaster.ts - 書類マスタ定義
 
 /**
  * 書類マスタアイテムの型定義

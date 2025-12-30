@@ -1,0 +1,12 @@
+# TypeScript & Build Safety Rules
+
+- **Strict Type Safety**: `any` 型の使用を禁止します。不明な型がある場合は `unknown` を使用し、適切に型ガードを行ってください。
+- **No Emit Check**: コードを変更した後は、必ず `npx tsc --noEmit` を実行して、プロジェクト全体に型矛盾が生じていないか確認してください。
+- **Import Strategy**: 
+    - 外部ライブラリやコンポーネントをインポートする際、存在しないパスを指定しないでください。
+    - 既存の `types.ts` や `@/types` に定義されている型を優先的に再利用し、重複した型定義を作らないでください。
+- **Component Consistency**: Lucide-reactなどのアイコンライブラリや、UIコンポーネント（Shadcn UI等）を使用する際は、既存の導入済みバージョンと一貫性のある書き方（lucide-reactならキャメルケース等）を徹底してください。
+- **Environment Variables**: `process.env` を使用する際は、型定義（NodeJS.ProcessEnv）を考慮するか、存在チェックを必ず含めてください。
+
+# Git操作について
+コミットメッセージは日本語

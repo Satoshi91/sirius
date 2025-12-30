@@ -11,9 +11,10 @@ export async function getUsersAction() {
     await requireAuth();
     const users = await getAllUsers();
     return { success: true, users };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error fetching users:", error);
-    return { error: error.message || "職員の取得に失敗しました" };
+    const errorMessage = error instanceof Error ? error.message : "職員の取得に失敗しました";
+    return { error: errorMessage };
   }
 }
 
@@ -63,9 +64,10 @@ export async function createUserAction(formData: FormData) {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating user:", error);
-    return { error: error.message || "職員の作成に失敗しました" };
+    const errorMessage = error instanceof Error ? error.message : "職員の作成に失敗しました";
+    return { error: errorMessage };
   }
 }
 
@@ -95,9 +97,10 @@ export async function updateUserAction(userId: string, formData: FormData) {
     });
 
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error updating user:", error);
-    return { error: error.message || "職員の更新に失敗しました" };
+    const errorMessage = error instanceof Error ? error.message : "職員の更新に失敗しました";
+    return { error: errorMessage };
   }
 }
 
@@ -117,9 +120,10 @@ export async function deactivateUserAction(userId: string) {
     // userIdはメールアドレス（ドキュメントID）
     await deactivateUser(userId);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error deactivating user:", error);
-    return { error: error.message || "職員の無効化に失敗しました" };
+    const errorMessage = error instanceof Error ? error.message : "職員の無効化に失敗しました";
+    return { error: errorMessage };
   }
 }
 

@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Turbopack設定を明示的に指定（Vercelデプロイ時のエラー回避）
-  turbopack: {},
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.firebasestorage.app',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.googleapis.com',
+      },
+    ],
+  },
   webpack: (config, { dev }) => {
     if (dev) {
       // Windowsでのファイルウォッチャーの問題を解決
@@ -16,6 +26,13 @@ const nextConfig: NextConfig = {
           '**/.cursor/**', // デバッグログファイルをウォッチ対象から除外
         ],
       };
+    }
+    // firebase-adminを外部パッケージとして扱う
+    config.externals = config.externals || [];
+    if (Array.isArray(config.externals)) {
+      config.externals.push("firebase-admin");
+    } else if (typeof config.externals === "object") {
+      config.externals["firebase-admin"] = "commonjs firebase-admin";
     }
     return config;
   },
