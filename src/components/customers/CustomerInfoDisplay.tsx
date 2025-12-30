@@ -90,6 +90,19 @@ export default function CustomerInfoDisplay({
           </div>
         )}
 
+        {showFullInfo && customer.expiryDate && (
+          <div>
+            <h3 className="text-sm font-semibold text-gray-700 mb-1">在留期限</h3>
+            <p className="text-black">
+              {customer.expiryDate instanceof Date 
+                ? customer.expiryDate.toLocaleDateString('ja-JP')
+                : (customer.expiryDate instanceof Timestamp)
+                  ? customer.expiryDate.toDate().toLocaleDateString('ja-JP')
+                  : ""}
+            </p>
+          </div>
+        )}
+
         {customer.email && (
           <div>
             <h3 className="text-sm font-semibold text-gray-700 mb-1">メールアドレス</h3>

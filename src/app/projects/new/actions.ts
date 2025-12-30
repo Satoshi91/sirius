@@ -23,7 +23,6 @@ export async function createProjectAction(formData: FormData) {
   const customerId = formData.get("customerId") as string;
   const currentVisaType = formData.get("currentVisaType") as string | null;
   const visaType = formData.get("visaType") as string;
-  const expiryDate = formData.get("expiryDate") as string | null;
 
   // バリデーション
   if (!title || !title.trim()) {
@@ -42,7 +41,6 @@ export async function createProjectAction(formData: FormData) {
       customerId: customerId.trim(),
       currentVisaType: currentVisaType?.trim() || undefined,
       visaType: visaType.trim(),
-      expiryDate: expiryDate ? new Date(expiryDate) : null,
       status: 'pending',
     });
 

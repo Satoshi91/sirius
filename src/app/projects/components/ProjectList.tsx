@@ -77,7 +77,7 @@ export default function ProjectList({ projects }: ProjectListProps) {
                 {project.visaType}
               </td>
               <td className="px-4 py-3 text-zinc-700">
-                {formatDate(project.expiryDate)}
+                {formatDate(project.customer?.expiryDate)}
               </td>
             </tr>
           ))}

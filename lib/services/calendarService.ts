@@ -1,8 +1,8 @@
 import { Timestamp } from "firebase/firestore";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy } from "firebase/firestore";
 import { db } from "../firebase";
-import { Project } from "@/types";
-import { getCustomersByIds } from "./customerService";
+import { Customer } from "@/types";
+import { getProjectsByCustomerId } from "./projectService";
 import { subMonths } from "date-fns";
 import { getFullNameJa, getDisplayName } from "@/lib/utils/customerName";
 
@@ -17,7 +17,7 @@ export interface CalendarEvent {
 }
 
 /**
- * 指定期間内の在留期限を持つプロジェクトを取得し、カレンダーイベントを生成する
+ * 指定期間内の在留期限を持つ顧客を取得し、カレンダーイベントを生成する
  * @param startDate 取得開始日
  * @param endDate 取得終了日
  * @returns カレンダーイベントの配列
@@ -34,67 +34,71 @@ export async function getCalendarEvents(
     const startTimestamp = Timestamp.fromDate(extendedStartDate);
     const endTimestamp = Timestamp.fromDate(endDate);
     
-    // expiryDateが指定期間内にあるプロジェクトを取得
-    const projectsRef = collection(db, "projects");
+    // expiryDateが指定期間内にある顧客を取得
+    const customersRef = collection(db, "customers");
     const q = query(
-      projectsRef,
+      customersRef,
       where("expiryDate", ">=", startTimestamp),
-      where("expiryDate", "<=", endTimestamp)
+      where("expiryDate", "<=", endTimestamp),
+      orderBy("expiryDate", "asc")
     );
     
     const querySnapshot = await getDocs(q);
     
-    const projects: Project[] = querySnapshot.docs.map((doc) => {
+    const customers: Customer[] = querySnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        title: data.title || '',
-        customerId: data.customerId,
-        visaType: data.visaType,
-        currentVisaType: data.currentVisaType,
+        name: data.name || {
+          last: { en: "", ja: "", kana: "" },
+          first: { en: "", ja: "", kana: "" },
+        },
+        nationality: data.nationality,
+        birthday: data.birthday?.toDate() || null,
+        gender: data.gender || null,
+        residenceCardNumber: data.residenceCardNumber || null,
         expiryDate: data.expiryDate?.toDate() || null,
-        applicationDate: data.applicationDate?.toDate() || null,
-        status: data.status || 'pending',
-        organizationId: data.organizationId,
-        createdBy: data.createdBy,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        notes: data.notes,
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
-      } as Project;
+      } as Customer;
     });
     
-    // expiryDateがnullのプロジェクトを除外
-    const validProjects = projects.filter(p => p.expiryDate !== null);
+    // expiryDateがnullの顧客を除外
+    const validCustomers = customers.filter(c => c.expiryDate !== null);
     
-    if (validProjects.length === 0) {
+    if (validCustomers.length === 0) {
       return [];
     }
-    
-    // 顧客情報を一括取得
-    const customerIds = [...new Set(validProjects.map(p => p.customerId).filter(Boolean))];
-    const customers = await getCustomersByIds(customerIds);
-    const customerMap = new Map(customers.map(c => [c.id, c]));
     
     // カレンダーイベントを生成
     const events: CalendarEvent[] = [];
     
-    for (const project of validProjects) {
-      if (!project.expiryDate) continue;
+    for (const customer of validCustomers) {
+      if (!customer.expiryDate) continue;
       
-      const expiryDate = project.expiryDate instanceof Date 
-        ? project.expiryDate 
-        : (project.expiryDate as Timestamp).toDate();
+      const expiryDate = customer.expiryDate instanceof Date 
+        ? customer.expiryDate 
+        : (customer.expiryDate as Timestamp).toDate();
       
-      const customer = customerMap.get(project.customerId);
-      const customerName = customer ? (getFullNameJa(customer) || getDisplayName(customer)) : `顧客ID: ${project.customerId}`;
+      const customerName = getFullNameJa(customer) || getDisplayName(customer);
+      
+      // 顧客に関連する最新の案件を取得（projectIdが必要なため）
+      const projects = await getProjectsByCustomerId(customer.id);
+      const latestProject = projects.length > 0 ? projects[0] : null;
+      const projectId = latestProject?.id || customer.id;
       
       // 期限日イベント（赤色）
       events.push({
-        id: `expiry-${project.id}`,
+        id: `expiry-${customer.id}`,
         title: `${customerName} 在留期限`,
         start: expiryDate.toISOString().split('T')[0], // YYYY-MM-DD形式
         color: '#dc2626', // 赤色
-        customerId: project.customerId,
-        projectId: project.id,
+        customerId: customer.id,
+        projectId: projectId,
         eventType: 'expiry',
       });
       
@@ -104,12 +108,12 @@ export async function getCalendarEvents(
       // 準備開始日が表示期間内にある場合のみ追加
       if (preparationDate >= startDate && preparationDate <= endDate) {
         events.push({
-          id: `preparation-${project.id}`,
+          id: `preparation-${customer.id}`,
           title: `${customerName} 更新準備開始`,
           start: preparationDate.toISOString().split('T')[0], // YYYY-MM-DD形式
           color: '#2563eb', // 青色
-          customerId: project.customerId,
-          projectId: project.id,
+          customerId: customer.id,
+          projectId: projectId,
           eventType: 'preparation',
         });
       }

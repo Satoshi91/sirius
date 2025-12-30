@@ -18,7 +18,6 @@ export default function NoteTimeline({ notes, onAddNote }: NoteTimelineProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [localNotes, setLocalNotes] = useState<Note[]>(notes || []);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // notesが更新されたときにローカルステートを更新
@@ -27,11 +26,6 @@ export default function NoteTimeline({ notes, onAddNote }: NoteTimelineProps) {
       setLocalNotes(notes);
     }
   }, [notes]);
-
-  // 新しいメッセージが追加されたらスクロール
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [localNotes]);
 
   const formatDate = (date: Date | Timestamp): string => {
     const dateObj = date instanceof Date ? date : date.toDate();
@@ -122,7 +116,6 @@ export default function NoteTimeline({ notes, onAddNote }: NoteTimelineProps) {
                 </div>
               </div>
             ))}
-            <div ref={messagesEndRef} />
           </>
         )}
       </div>

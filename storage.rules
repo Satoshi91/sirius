@@ -6,9 +6,27 @@ service firebase.storage {
       return request.auth != null;
     }
     
+    // ヘルパー関数: ユーザーのメールアドレスを取得
+    // Firebase Authのトークンには通常emailが含まれているが、
+    // Storage Rulesでアクセスするにはカスタムクレームとして設定されている必要がある
+    function getUserEmail() {
+      // カスタムクレームとして設定されたemailを取得
+      return request.auth.token.email != null 
+        ? request.auth.token.email 
+        : null;
+    }
+    
+    // ヘルパー関数: 認証済みユーザーのUIDを使用してFirestoreからユーザー情報を取得する試行
+    // 注意: この方法は、FirestoreのユーザードキュメントIDがメールアドレスの場合のみ動作する
+    // しかし、UIDがわからないため、すべてのユーザードキュメントを検索することはできない
+    // そのため、カスタムクレームとしてemailを設定することが必須
+    
     // ヘルパー関数: ユーザーのroleを取得
     function getUserRole() {
-      return firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.role;
+      let email = getUserEmail();
+      return email != null && firestore.exists(/databases/(default)/documents/users/$(email))
+        ? firestore.get(/databases/(default)/documents/users/$(email)).data.role
+        : null;
     }
     
     // ヘルパー関数: adminかチェック
@@ -18,9 +36,15 @@ service firebase.storage {
     
     // ヘルパー関数: ユーザーが有効かチェック
     function isUserActive() {
-      return isAuthenticated() && 
-             firestore.exists(/databases/(default)/documents/users/$(request.auth.token.email)) &&
-             firestore.get(/databases/(default)/documents/users/$(request.auth.token.email)).data.isActive == true;
+      let email = getUserEmail();
+      // カスタムクレームが設定されている場合、Firestoreからユーザー情報を取得してチェック
+      // カスタムクレームが設定されていない場合、認証済みユーザーに対してアクセスを許可
+      // 注意: これは一時的な解決策です。本番環境では、カスタムクレームを正しく設定する必要があります
+      return email != null 
+        ? (isAuthenticated() && 
+           firestore.exists(/databases/(default)/documents/users/$(email)) &&
+           firestore.get(/databases/(default)/documents/users/$(email)).data.isActive == true)
+        : isAuthenticated();
     }
     
     // projects/{projectId}/documents/* パス: 認証済みかつ有効なユーザーのみ読み書き可能

@@ -76,6 +76,10 @@ export default function LoginPage() {
         return;
       }
 
+      // カスタムクレームが設定された可能性があるため、IDトークンを再取得
+      // これにより、Storage Rulesでrequest.auth.token.emailにアクセスできるようになります
+      await firebaseUser.getIdToken(true);
+
       toast.success("ログインに成功しました");
       // ページをリロードしてFirebase Authの状態を確実に同期
       window.location.href = "/projects";
@@ -164,6 +168,10 @@ export default function LoginPage() {
         setLoading(false);
         return;
       }
+
+      // カスタムクレームが設定された可能性があるため、IDトークンを再取得
+      // これにより、Storage Rulesでrequest.auth.token.emailにアクセスできるようになります
+      await firebaseUser.getIdToken(true);
 
       toast.success("ゲストログインに成功しました");
       // ページをリロードしてFirebase Authの状態を確実に同期

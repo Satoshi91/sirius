@@ -13,7 +13,9 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Customer } from "@/types";
-import { uploadCustomerDocumentAction, deleteCustomerDocumentAction } from "../../actions";
+import { deleteCustomerDocumentAction } from "../../actions";
+import { uploadCustomerDocument } from "@/lib/services/customerService";
+import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
 import { Upload, X, Eye, Loader2 } from "lucide-react";
 import Image from "next/image";
@@ -70,26 +72,29 @@ export default function CustomerDocumentsSection({
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("label", label);
-
-      const result = await uploadCustomerDocumentAction(customerId, formData);
-      if (result?.error) {
-        toast.error(result.error);
-      } else if (result?.success) {
-        toast.success("ファイルをアップロードしました");
-        router.refresh();
-        // フォームをリセット
-        setSelectedLabel("");
-        setCustomLabel("");
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+      // #region agent log
+      const currentUser = auth.currentUser;
+      const userEmail = currentUser?.email || null;
+      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CustomerDocumentsSection.tsx:72',message:'handleFileChange before upload',data:{customerId,label,userEmail,hasAuth:!!currentUser},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
+      
+      await uploadCustomerDocument(customerId, file, label);
+      toast.success("ファイルをアップロードしました");
+      router.refresh();
+      // フォームをリセット
+      setSelectedLabel("");
+      setCustomLabel("");
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     } catch (error) {
       console.error("Error uploading file:", error);
-      toast.error("ファイルのアップロードに失敗しました");
+      // より詳細なエラーメッセージを表示
+      if (error instanceof Error) {
+        toast.error(`ファイルのアップロードに失敗しました: ${error.message}`);
+      } else {
+        toast.error("ファイルのアップロードに失敗しました。もう一度お試しください。");
+      }
     } finally {
       setIsUploading(false);
     }

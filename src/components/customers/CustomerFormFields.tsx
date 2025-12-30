@@ -1,5 +1,7 @@
 "use client";
 
+import ResidenceCardNumberInput from "./ResidenceCardNumberInput";
+
 interface CustomerFormFieldsProps {
   formData: {
     name: {
@@ -10,6 +12,7 @@ interface CustomerFormFieldsProps {
     birthday: string;
     gender: string;
     residenceCardNumber: string;
+    expiryDate: string;
     email: string;
     phone: string;
     address: string;
@@ -29,8 +32,11 @@ export default function CustomerFormFields({
   readOnly = false,
 }: CustomerFormFieldsProps) {
   const handleNameChange = (path: string, value: string) => {
+    console.log("[CustomerFormFields] handleNameChange called:", { path, value, hasOnNameChange: !!onNameChange });
     if (onNameChange) {
       onNameChange(path, value);
+    } else {
+      console.warn("[CustomerFormFields] onNameChange is not provided!");
     }
   };
 
@@ -46,7 +52,7 @@ export default function CustomerFormFields({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="name.last.en"
+              htmlFor="name-last-en-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               姓（アルファベット）
@@ -59,10 +65,14 @@ export default function CustomerFormFields({
               <>
                 <input
                   type="text"
-                  id="name.last.en"
+                  id="name-last-en-99x"
                   name="name.last.en"
                   value={formData.name.last.en}
-                  onChange={(e) => handleNameChange('name.last.en', e.target.value)}
+                  onChange={(e) => {
+                    console.log("[CustomerFormFields] name.last.en onChange:", { value: e.target.value });
+                    handleNameChange('name.last.en', e.target.value);
+                  }}
+                  autoComplete="off"
                   className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
                     fieldErrors['name.last.en']
                       ? "border-red-500"
@@ -79,7 +89,7 @@ export default function CustomerFormFields({
 
           <div>
             <label
-              htmlFor="name.first.en"
+              htmlFor="name-first-en-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               名（アルファベット）
@@ -92,10 +102,11 @@ export default function CustomerFormFields({
               <>
                 <input
                   type="text"
-                  id="name.first.en"
+                  id="name-first-en-99x"
                   name="name.first.en"
                   value={formData.name.first.en}
                   onChange={(e) => handleNameChange('name.first.en', e.target.value)}
+                  autoComplete="off"
                   className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
                     fieldErrors['name.first.en']
                       ? "border-red-500"
@@ -118,7 +129,7 @@ export default function CustomerFormFields({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="name.last.ja"
+              htmlFor="name-last-ja-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               姓（漢字）
@@ -131,10 +142,11 @@ export default function CustomerFormFields({
               <>
                 <input
                   type="text"
-                  id="name.last.ja"
+                  id="name-last-ja-99x"
                   name="name.last.ja"
                   value={formData.name.last.ja}
                   onChange={(e) => handleNameChange('name.last.ja', e.target.value)}
+                  autoComplete="off"
                   className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
                     fieldErrors['name.last.ja']
                       ? "border-red-500"
@@ -151,7 +163,7 @@ export default function CustomerFormFields({
 
           <div>
             <label
-              htmlFor="name.first.ja"
+              htmlFor="name-first-ja-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               名（漢字）
@@ -164,10 +176,11 @@ export default function CustomerFormFields({
               <>
                 <input
                   type="text"
-                  id="name.first.ja"
+                  id="name-first-ja-99x"
                   name="name.first.ja"
                   value={formData.name.first.ja}
                   onChange={(e) => handleNameChange('name.first.ja', e.target.value)}
+                  autoComplete="off"
                   className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
                     fieldErrors['name.first.ja']
                       ? "border-red-500"
@@ -201,7 +214,7 @@ export default function CustomerFormFields({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label
-              htmlFor="name.last.kana"
+              htmlFor="name-last-kana-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               姓（カタカナ）
@@ -213,10 +226,11 @@ export default function CustomerFormFields({
             ) : (
               <input
                 type="text"
-                id="name.last.kana"
+                id="name-last-kana-99x"
                 name="name.last.kana"
                 value={formData.name.last.kana}
                 onChange={(e) => handleNameChange('name.last.kana', e.target.value)}
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="姓（カタカナ）を入力"
               />
@@ -225,7 +239,7 @@ export default function CustomerFormFields({
 
           <div>
             <label
-              htmlFor="name.first.kana"
+              htmlFor="name-first-kana-99x"
               className="block text-sm font-medium text-black mb-2"
             >
               名（カタカナ）
@@ -237,10 +251,11 @@ export default function CustomerFormFields({
             ) : (
               <input
                 type="text"
-                id="name.first.kana"
+                id="name-first-kana-99x"
                 name="name.first.kana"
                 value={formData.name.first.kana}
                 onChange={(e) => handleNameChange('name.first.kana', e.target.value)}
+                autoComplete="off"
                 className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
                 placeholder="名（カタカナ）を入力"
               />
@@ -253,7 +268,7 @@ export default function CustomerFormFields({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label
-            htmlFor="nationality"
+            htmlFor="kokuseki-99x"
             className="block text-sm font-medium text-black mb-2"
           >
             国籍 <span className="text-red-500">*</span>
@@ -266,10 +281,18 @@ export default function CustomerFormFields({
             <>
               <input
                 type="text"
-                id="nationality"
+                id="kokuseki-99x"
                 name="nationality"
                 value={formData.nationality}
-                onChange={onChange}
+                onChange={(e) => {
+                  console.log("[CustomerFormFields] nationality onChange:", { value: e.target.value, hasOnChange: !!onChange });
+                  if (onChange) {
+                    onChange(e);
+                  } else {
+                    console.warn("[CustomerFormFields] onChange is not provided for nationality!");
+                  }
+                }}
+                autoComplete="off"
                 className={`w-full px-4 py-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black ${
                   fieldErrors.nationality
                     ? "border-red-500"
@@ -286,7 +309,7 @@ export default function CustomerFormFields({
 
         <div>
           <label
-            htmlFor="birthday"
+            htmlFor="tanjo-99x"
             className="block text-sm font-medium text-black mb-2"
           >
             生年月日
@@ -298,10 +321,11 @@ export default function CustomerFormFields({
           ) : (
             <input
               type="date"
-              id="birthday"
+              id="tanjo-99x"
               name="birthday"
               value={formData.birthday}
               onChange={onChange}
+              autoComplete="off"
               className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
             />
           )}
@@ -309,7 +333,7 @@ export default function CustomerFormFields({
 
         <div>
           <label
-            htmlFor="gender"
+            htmlFor="seibetsu-99x"
             className="block text-sm font-medium text-black mb-2"
           >
             性別
@@ -320,10 +344,11 @@ export default function CustomerFormFields({
             </div>
           ) : (
             <select
-              id="gender"
+              id="seibetsu-99x"
               name="gender"
               value={formData.gender}
               onChange={onChange}
+              autoComplete="off"
               className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
             >
               <option value="">選択してください</option>
@@ -336,27 +361,69 @@ export default function CustomerFormFields({
       </div>
 
       {/* 在留カード情報 */}
-      <div>
-        <label
-          htmlFor="residenceCardNumber"
-          className="block text-sm font-medium text-black mb-2"
-        >
-          在留カード番号
-        </label>
+      <div className="space-y-4">
         {readOnly ? (
-          <div className="w-full px-4 py-2 border border-zinc-200 rounded-lg bg-zinc-50 text-black">
-            {formData.residenceCardNumber || "-"}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="zairyu-no-99x"
+                className="block text-sm font-medium text-black mb-2"
+              >
+                在留カード番号
+              </label>
+              <div className="w-full px-4 py-2 border border-zinc-200 rounded-lg bg-zinc-50 text-black">
+                {formData.residenceCardNumber || "-"}
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="expiryDate"
+                className="block text-sm font-medium text-black mb-2"
+              >
+                在留期限
+              </label>
+              <div className="w-full px-4 py-2 border border-zinc-200 rounded-lg bg-zinc-50 text-black">
+                {formData.expiryDate || "-"}
+              </div>
+            </div>
           </div>
         ) : (
-          <input
-            type="text"
-            id="residenceCardNumber"
-            name="residenceCardNumber"
-            value={formData.residenceCardNumber}
-            onChange={onChange}
-            className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-            placeholder="在留カード番号を入力"
-          />
+          <>
+            <ResidenceCardNumberInput
+              value={formData.residenceCardNumber}
+              onChange={(value) => {
+                if (onChange) {
+                  // 既存のonChangeハンドラーとの互換性のため、合成イベントをシミュレート
+                  const syntheticEvent = {
+                    target: {
+                      name: "residenceCardNumber",
+                      value: value,
+                    },
+                  } as React.ChangeEvent<HTMLInputElement>;
+                  onChange(syntheticEvent);
+                }
+              }}
+              error={fieldErrors.residenceCardNumber}
+              disabled={readOnly}
+            />
+            <div>
+              <label
+                htmlFor="expiryDate"
+                className="block text-sm font-medium text-black mb-2"
+              >
+                在留期限
+              </label>
+              <input
+                type="date"
+                id="kigen-99x"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={onChange}
+                autoComplete="off"
+                className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
+              />
+            </div>
+          </>
         )}
       </div>
 
@@ -364,7 +431,7 @@ export default function CustomerFormFields({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label
-            htmlFor="email"
+            htmlFor="mail-99x"
             className="block text-sm font-medium text-black mb-2"
           >
             メールアドレス
@@ -376,10 +443,11 @@ export default function CustomerFormFields({
           ) : (
             <input
               type="email"
-              id="email"
+              id="mail-99x"
               name="email"
               value={formData.email}
               onChange={onChange}
+              autoComplete="off"
               className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="メールアドレスを入力"
             />
@@ -388,7 +456,7 @@ export default function CustomerFormFields({
 
         <div>
           <label
-            htmlFor="phone"
+            htmlFor="denwa-99x"
             className="block text-sm font-medium text-black mb-2"
           >
             電話番号
@@ -400,10 +468,11 @@ export default function CustomerFormFields({
           ) : (
             <input
               type="tel"
-              id="phone"
+              id="denwa-99x"
               name="phone"
               value={formData.phone}
               onChange={onChange}
+              autoComplete="off"
               className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
               placeholder="電話番号を入力"
             />
@@ -413,7 +482,7 @@ export default function CustomerFormFields({
 
       <div>
         <label
-          htmlFor="address"
+          htmlFor="jusho-99x"
           className="block text-sm font-medium text-black mb-2"
         >
           住所
@@ -425,10 +494,11 @@ export default function CustomerFormFields({
         ) : (
           <input
             type="text"
-            id="address"
+            id="jusho-99x"
             name="address"
             value={formData.address}
             onChange={onChange}
+            autoComplete="off"
             className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
             placeholder="住所を入力"
           />
@@ -437,7 +507,7 @@ export default function CustomerFormFields({
 
       <div>
         <label
-          htmlFor="notes"
+          htmlFor="biko-99x"
           className="block text-sm font-medium text-black mb-2"
         >
           備考・メモ
@@ -448,11 +518,12 @@ export default function CustomerFormFields({
           </div>
         ) : (
           <textarea
-            id="notes"
+            id="biko-99x"
             name="notes"
             value={formData.notes}
             onChange={onChange}
             rows={4}
+            autoComplete="off"
             className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
             placeholder="備考・メモを入力"
           />

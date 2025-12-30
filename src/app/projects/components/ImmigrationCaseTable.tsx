@@ -1,6 +1,6 @@
 "use client";
 
-import { Project, PROJECT_STATUS_LABELS } from "@/types";
+import { Project, PROJECT_STATUS_LABELS, PROJECT_STATUS_OPTIONS } from "@/types";
 import {
   Table,
   TableBody,
@@ -9,24 +9,62 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { AlertCircle, Eye } from "lucide-react";
+import { AlertCircle, FileText, Trash2 } from "lucide-react";
 import { getDisplayName, getFullNameEn } from "@/lib/utils/customerName";
 import { Timestamp } from "firebase/firestore";
 import PaymentStatusToggle from "./PaymentStatusToggle";
+import { useRouter } from "next/navigation";
+import { useTransition } from "react";
+import { deleteProjectAction } from "../[id]/actions";
 
 interface ImmigrationCaseTableProps {
   projects: Project[];
+  statusFilter: string;
+  onStatusFilterChange: (status: string) => void;
+  visaTypeFilter: string;
+  onVisaTypeFilterChange: (visaType: string) => void;
+  visaTypes: string[];
 }
 
 export default function ImmigrationCaseTable({
   projects,
+  statusFilter,
+  onStatusFilterChange,
+  visaTypeFilter,
+  onVisaTypeFilterChange,
+  visaTypes,
 }: ImmigrationCaseTableProps) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const isDevelopment = process.env.NODE_ENV === "development";
+  
   const now = new Date();
   const sevenDaysLater = new Date(now);
   sevenDaysLater.setDate(now.getDate() + 7);
+
+  const handleDelete = (projectId: string) => {
+    if (!isDevelopment) return;
+    
+    startTransition(async () => {
+      const result = await deleteProjectAction(projectId);
+      if (result?.error) {
+        console.error("削除エラー:", result.error);
+        alert(result.error);
+      } else if (result?.success) {
+        router.refresh();
+      }
+    });
+  };
 
   const formatShortDate = (date: Date | Timestamp | null | undefined): string => {
     if (!date) return "-";
@@ -65,23 +103,52 @@ export default function ImmigrationCaseTable({
         <TableHeader>
           <TableRow className="bg-blue-50">
             <TableHead className="w-[120px]">期限</TableHead>
-            <TableHead>案件名</TableHead>
             <TableHead>依頼者名</TableHead>
             <TableHead className="w-[100px]">国籍</TableHead>
-            <TableHead className="w-[150px]">ビザの種類</TableHead>
-            <TableHead className="w-[120px]">進捗ステータス</TableHead>
+            <TableHead className="w-[150px]">
+              <div className="flex flex-col gap-2">
+                <span>申請在留資格</span>
+                <Select value={visaTypeFilter} onValueChange={onVisaTypeFilterChange}>
+                  <SelectTrigger className="h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="全て" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全て</SelectItem>
+                    {visaTypes.map((visaType) => (
+                      <SelectItem key={visaType} value={visaType}>
+                        {visaType}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TableHead>
+            <TableHead className="w-[120px]">
+              <div className="flex flex-col gap-2">
+                <span>進捗ステータス</span>
+                <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                  <SelectTrigger className="h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
+                    <SelectValue placeholder="全て" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">全て</SelectItem>
+                    {PROJECT_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </TableHead>
             <TableHead className="w-[120px]">入金ステータス</TableHead>
-            <TableHead className="w-[150px]">最終更新日</TableHead>
             <TableHead className="w-[100px] text-right">操作</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {projects.map((project) => {
-            const expiryDate = project.expiryDate;
+            const expiryDate = project.customer?.expiryDate;
             const deadlineNear = isDeadlineNear(expiryDate);
-            const updatedAt = project.updatedAt instanceof Date 
-              ? project.updatedAt 
-              : (project.updatedAt as Timestamp).toDate();
             return (
               <TableRow
                 key={project.id}
@@ -102,11 +169,6 @@ export default function ImmigrationCaseTable({
                   ) : (
                     <span className="text-gray-700">-</span>
                   )}
-                </TableCell>
-                <TableCell>
-                  <div className="font-medium text-black">
-                    {project.title}
-                  </div>
                 </TableCell>
                 <TableCell>
                   {project.customer ? (
@@ -151,16 +213,27 @@ export default function ImmigrationCaseTable({
                 <TableCell>
                   <PaymentStatusToggle project={project} />
                 </TableCell>
-                <TableCell className="text-gray-700">
-                  {formatShortDate(updatedAt)}
-                </TableCell>
                 <TableCell className="text-right">
-                  <Link href={`/projects/${project.id}`}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                      <Eye className="h-3 w-3" />
-                      詳細
-                    </Button>
-                  </Link>
+                  <div className="flex items-center justify-end gap-2">
+                    <Link href={`/projects/${project.id}`}>
+                      <Button variant="outline" size="sm" className="gap-2">
+                        <FileText className="h-3 w-3" />
+                        詳細
+                      </Button>
+                    </Link>
+                    {isDevelopment && (
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => handleDelete(project.id)}
+                        disabled={isPending}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        削除
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             );

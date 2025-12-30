@@ -16,10 +16,10 @@ export default function StatsCards({ projects }: StatsCardsProps) {
 
   // 期限間近: 7日以内に期限が来る案件
   const nearDeadlineCount = projects.filter((project) => {
-    if (!project.expiryDate) return false;
-    const expiryDate = project.expiryDate instanceof Date 
-      ? project.expiryDate 
-      : (project.expiryDate as Timestamp).toDate();
+    if (!project.customer?.expiryDate) return false;
+    const expiryDate = project.customer.expiryDate instanceof Date 
+      ? project.customer.expiryDate 
+      : (project.customer.expiryDate as Timestamp).toDate();
     return expiryDate >= now && expiryDate <= sevenDaysLater;
   }).length;
 
@@ -34,7 +34,7 @@ export default function StatsCards({ projects }: StatsCardsProps) {
   ).length;
 
   return (
-    <div className="grid gap-4 md:grid-cols-3 mb-6">
+    <div className="flex flex-col gap-4">
       <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-white">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-blue-900">

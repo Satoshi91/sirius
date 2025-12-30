@@ -49,6 +49,7 @@ export interface Customer {
   gender?: string | null;          // 性別
   // 在留カード情報
   residenceCardNumber?: string | null;  // 在留カード番号（最新のものをマスターで保持）
+  expiryDate?: Date | Timestamp | null;  // 在留期限（最新のものをマスターで保持）
   // 連絡先
   email?: string;                  // メールアドレス（オプション）
   phone?: string;                  // 電話番号（オプション）
@@ -96,7 +97,6 @@ export interface Project {
   // 申請情報
   visaType: string;                // 申請する在留資格（必須）
   currentVisaType?: string;        // 申請時の在留資格（履歴として保持）
-  expiryDate: Date | Timestamp | null;  // 申請の結果、新しく許可された在留期限
   applicationDate?: Date | Timestamp | null;  // 申請日
   // 進捗管理
   status: ProjectStatus;  // 統一されたステータス
@@ -287,6 +287,37 @@ export interface ProjectActivityLog {
     expiryDate?: { oldValue?: string | null; newValue?: string | null };   // 在留期限の変更
     status?: { oldValue?: string | null; newValue?: string | null };       // ステータスの変更
     paymentStatus?: { oldValue?: string | null; newValue?: string | null };  // 入金ステータスの変更
+  };
+  performedBy: string;                   // 実行したユーザーのメールアドレス
+  performedByName?: string;              // 実行したユーザーの表示名（オプション）
+  createdAt: Date | Timestamp;
+}
+
+/**
+ * 顧客操作履歴の型定義
+ */
+export interface CustomerActivityLog {
+  id: string;
+  customerId: string;                    // 顧客ID
+  actionType:                            // 操作の種類
+    | 'customer_created'                 // 顧客作成
+    | 'customer_updated'                  // 顧客更新
+    | 'customer_deleted';                // 顧客削除
+  description: string;                   // 操作の説明（例: "顧客情報を更新しました"）
+  details?: {                            // 操作の詳細情報（任意）
+    field?: string;                      // 変更されたフィールド名
+    oldValue?: string | number | null;   // 変更前の値
+    newValue?: string | number | null;   // 変更後の値
+    name?: { oldValue?: string | null; newValue?: string | null };   // 氏名の変更
+    nationality?: { oldValue?: string | null; newValue?: string | null };  // 国籍の変更
+    birthday?: { oldValue?: string | null; newValue?: string | null };     // 生年月日の変更
+    gender?: { oldValue?: string | null; newValue?: string | null };       // 性別の変更
+    residenceCardNumber?: { oldValue?: string | null; newValue?: string | null };  // 在留カード番号の変更
+    expiryDate?: { oldValue?: string | null; newValue?: string | null };   // 在留期限の変更
+    email?: { oldValue?: string | null; newValue?: string | null };       // メールアドレスの変更
+    phone?: { oldValue?: string | null; newValue?: string | null };       // 電話番号の変更
+    address?: { oldValue?: string | null; newValue?: string | null };     // 住所の変更
+    notes?: { oldValue?: string | null; newValue?: string | null };      // 備考の変更
   };
   performedBy: string;                   // 実行したユーザーのメールアドレス
   performedByName?: string;              // 実行したユーザーの表示名（オプション）

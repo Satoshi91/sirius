@@ -81,7 +81,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
     return diffDays;
   };
 
-  const daysUntilExpiry = getDaysUntilExpiry(project.expiryDate);
+  const daysUntilExpiry = getDaysUntilExpiry(project.customer?.expiryDate ?? null);
   const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 90 && daysUntilExpiry >= 0;
 
   return (
@@ -93,7 +93,7 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
             href="/projects"
             className="text-gray-700 hover:text-black transition-colors"
           >
-            ← 案件一覧に戻る
+            ← 案件管理に戻る
           </Link>
         </div>
 
@@ -149,8 +149,8 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
                           </Badge>
                         )}
                       </div>
-                      {project.expiryDate ? (
-                        <p className="text-black font-semibold">{formatDate(project.expiryDate)}</p>
+                      {project.customer?.expiryDate ? (
+                        <p className="text-black font-semibold">{formatDate(project.customer.expiryDate)}</p>
                       ) : (
                         <p className="text-gray-700">-</p>
                       )}

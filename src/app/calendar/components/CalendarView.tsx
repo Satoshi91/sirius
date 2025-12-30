@@ -81,7 +81,7 @@ export default function CalendarView() {
         headerToolbar={{
           left: "prev,next today",
           center: "title",
-          right: "dayGridMonth",
+          right: "",
         }}
         locale={jaLocale}
         events={calendarEvents}

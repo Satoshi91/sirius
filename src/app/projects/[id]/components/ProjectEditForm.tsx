@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Project, PROJECT_STATUS_OPTIONS } from "@/types";
-import { Timestamp } from "firebase/firestore";
 import { updateProjectAction } from "../actions";
 import CustomerSelector from "./CustomerSelector";
 
@@ -21,18 +20,10 @@ export default function ProjectEditForm({
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(project.customerId || null);
-  
-  // 日付をYYYY-MM-DD形式に変換
-  const formatDateForInput = (date: Date | Timestamp | null | undefined): string => {
-    if (!date) return "";
-    const dateObj = date instanceof Timestamp ? date.toDate() : date instanceof Date ? date : new Date(date);
-    return dateObj.toISOString().split("T")[0];
-  };
 
   const [formData, setFormData] = useState({
     title: project.title,
     visaType: project.visaType,
-    expiryDate: formatDateForInput(project.expiryDate),
     status: project.status,
     paymentStatus: project.paymentStatus || '',
   });
@@ -62,7 +53,6 @@ export default function ProjectEditForm({
     formDataToSubmit.append("title", formData.title);
     formDataToSubmit.append("customerId", selectedCustomerId!);
     formDataToSubmit.append("visaType", formData.visaType);
-    formDataToSubmit.append("expiryDate", formData.expiryDate);
     formDataToSubmit.append("status", formData.status);
     if (formData.paymentStatus) {
       formDataToSubmit.append("paymentStatus", formData.paymentStatus);
@@ -153,23 +143,6 @@ export default function ProjectEditForm({
         {fieldErrors.visaType && (
           <p className="mt-1 text-sm text-red-500">{fieldErrors.visaType}</p>
         )}
-      </div>
-
-      <div>
-        <label
-          htmlFor="expiryDate"
-          className="block text-sm font-medium text-black mb-2"
-        >
-          有効期限
-        </label>
-        <input
-          type="date"
-          id="expiryDate"
-          name="expiryDate"
-          value={formData.expiryDate}
-          onChange={handleChange}
-          className="w-full px-4 py-2 border border-zinc-200 rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-        />
       </div>
 
       <div>

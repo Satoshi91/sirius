@@ -3,14 +3,6 @@ import { db } from "../firebase";
 import { Project, Note } from "@/types";
 import { getCustomersByIds, getCustomer } from "./customerService";
 
-// Firestoreから取得したNoteの型（Timestampを含む）
-interface FirestoreNote {
-  id: string;
-  content: string;
-  createdAt: Timestamp | Date;
-  authorName: string;
-}
-
 export async function getProjects(): Promise<Project[]> {
   try {
     const projectsRef = collection(db, "projects");
@@ -25,13 +17,12 @@ export async function getProjects(): Promise<Project[]> {
         customerId: data.customerId,
         visaType: data.visaType,
         currentVisaType: data.currentVisaType,
-        expiryDate: data.expiryDate?.toDate() || null,
         applicationDate: data.applicationDate?.toDate() || null,
         status: data.status || 'pending',
         paymentStatus: data.paymentStatus,
         organizationId: data.organizationId,
         createdBy: data.createdBy,
-        notes: data.notes ? (data.notes as FirestoreNote[]).map((n) => ({
+        notes: data.notes ? (data.notes as Note[]).map((n) => ({
           id: n.id,
           content: n.content,
           createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
@@ -78,13 +69,12 @@ export async function getProject(id: string): Promise<Project | null> {
       customerId: data.customerId,
       visaType: data.visaType,
       currentVisaType: data.currentVisaType,
-      expiryDate: data.expiryDate?.toDate() || null,
       applicationDate: data.applicationDate?.toDate() || null,
       status: data.status || 'pending',
       paymentStatus: data.paymentStatus,
       organizationId: data.organizationId,
       createdBy: data.createdBy,
-      notes: data.notes ? (data.notes as FirestoreNote[]).map((n) => {
+      notes: data.notes ? (data.notes as Note[]).map((n) => {
         let createdAt: Date;
         if (n.createdAt instanceof Date) {
           createdAt = n.createdAt;
@@ -128,7 +118,6 @@ export async function createProject(
       title: data.title,
       customerId: data.customerId,
       visaType: data.visaType,
-      expiryDate: data.expiryDate ? Timestamp.fromDate(data.expiryDate instanceof Date ? data.expiryDate : data.expiryDate.toDate()) : null,
       status: data.status || 'pending',
       createdAt: now,
       updatedAt: now,
@@ -177,9 +166,6 @@ export async function updateProject(
     if (data.customerId !== undefined) updateData.customerId = data.customerId;
     if (data.visaType !== undefined) updateData.visaType = data.visaType;
     if (data.currentVisaType !== undefined) updateData.currentVisaType = data.currentVisaType || null;
-    if (data.expiryDate !== undefined) {
-      updateData.expiryDate = data.expiryDate ? Timestamp.fromDate(data.expiryDate instanceof Date ? data.expiryDate : data.expiryDate.toDate()) : null;
-    }
     if (data.applicationDate !== undefined) {
       updateData.applicationDate = data.applicationDate 
         ? (data.applicationDate instanceof Date ? Timestamp.fromDate(data.applicationDate) : data.applicationDate)
@@ -219,13 +205,12 @@ export async function getProjectsByCustomerId(customerId: string): Promise<Proje
         customerId: data.customerId,
         visaType: data.visaType,
         currentVisaType: data.currentVisaType,
-        expiryDate: data.expiryDate?.toDate() || null,
         applicationDate: data.applicationDate?.toDate() || null,
         status: data.status || 'pending',
         paymentStatus: data.paymentStatus,
         organizationId: data.organizationId,
         createdBy: data.createdBy,
-        notes: data.notes ? (data.notes as FirestoreNote[]).map((n) => ({
+        notes: data.notes ? (data.notes as Note[]).map((n) => ({
           id: n.id,
           content: n.content,
           createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),

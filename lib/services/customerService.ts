@@ -1,25 +1,8 @@
 import { collection, getDocs, query, orderBy, addDoc, Timestamp, getDoc, doc, updateDoc, deleteDoc, where, arrayUnion } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "../firebase";
+import { auth } from "../firebase";
 import { Customer, CustomerDocument, Note } from "@/types";
-
-// Firestoreから取得したNoteの型（Timestampを含む）
-interface FirestoreNote {
-  id: string;
-  content: string;
-  createdAt: Timestamp | Date;
-  authorName: string;
-}
-
-// Firestoreから取得したCustomerDocumentの型（Timestampを含む）
-interface FirestoreCustomerDocument {
-  id: string;
-  label: string;
-  fileUrl: string;
-  storagePath: string;
-  fileName: string;
-  uploadedAt: Timestamp | Date;
-}
 
 export async function getCustomers(): Promise<Customer[]> {
   try {
@@ -39,17 +22,18 @@ export async function getCustomers(): Promise<Customer[]> {
         birthday: data.birthday?.toDate() || null,
         gender: data.gender || null,
         residenceCardNumber: data.residenceCardNumber || null,
+        expiryDate: data.expiryDate?.toDate() || null,
         email: data.email,
         phone: data.phone,
         address: data.address,
         notes: data.notes,
-        chatNotes: data.chatNotes ? (data.chatNotes as FirestoreNote[]).map((n) => ({
+        chatNotes: data.chatNotes ? (data.chatNotes as Note[]).map((n) => ({
           id: n.id,
           content: n.content,
           createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
           authorName: n.authorName,
         })) : undefined,
-        documents: data.documents ? (data.documents as FirestoreCustomerDocument[]).map((d) => ({
+        documents: data.documents ? (data.documents as CustomerDocument[]).map((d) => ({
           ...d,
           uploadedAt: d.uploadedAt instanceof Timestamp ? d.uploadedAt.toDate() : (d.uploadedAt instanceof Date ? d.uploadedAt : new Date()),
         })) : undefined,
@@ -76,26 +60,25 @@ export async function getCustomer(id: string): Promise<Customer | null> {
     return {
       id: customerSnap.id,
       name: data.name || {
-        surname: "",
-        givenName: "",
-        kanji: "",
-        kana: "",
+        last: { en: "", ja: "", kana: "" },
+        first: { en: "", ja: "", kana: "" },
       },
       nationality: data.nationality,
       birthday: data.birthday?.toDate() || null,
       gender: data.gender || null,
       residenceCardNumber: data.residenceCardNumber || null,
+      expiryDate: data.expiryDate?.toDate() || null,
       email: data.email,
       phone: data.phone,
       address: data.address,
       notes: data.notes,
-      chatNotes: data.chatNotes ? (data.chatNotes as FirestoreNote[]).map((n) => ({
+      chatNotes: data.chatNotes ? (data.chatNotes as Note[]).map((n) => ({
         id: n.id,
         content: n.content,
         createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
         authorName: n.authorName,
       })) : undefined,
-      documents: data.documents ? (data.documents as FirestoreCustomerDocument[]).map((d) => ({
+      documents: data.documents ? (data.documents as CustomerDocument[]).map((d) => ({
         ...d,
         uploadedAt: d.uploadedAt instanceof Timestamp ? d.uploadedAt.toDate() : (d.uploadedAt instanceof Date ? d.uploadedAt : new Date()),
       })) : undefined,
@@ -129,26 +112,25 @@ export async function getCustomersByIds(ids: string[]): Promise<Customer[]> {
         customers.push({
           id: doc.id,
           name: data.name || {
-            surname: "",
-            givenName: "",
-            kanji: "",
-            kana: "",
+            last: { en: "", ja: "", kana: "" },
+            first: { en: "", ja: "", kana: "" },
           },
           nationality: data.nationality,
           birthday: data.birthday?.toDate() || null,
           gender: data.gender || null,
           residenceCardNumber: data.residenceCardNumber || null,
+          expiryDate: data.expiryDate?.toDate() || null,
           email: data.email,
           phone: data.phone,
           address: data.address,
           notes: data.notes,
-          chatNotes: data.chatNotes ? (data.chatNotes as FirestoreNote[]).map((n) => ({
+          chatNotes: data.chatNotes ? (data.chatNotes as Note[]).map((n) => ({
             id: n.id,
             content: n.content,
             createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
             authorName: n.authorName,
           })) : undefined,
-          documents: data.documents ? (data.documents as FirestoreCustomerDocument[]).map((d) => ({
+          documents: data.documents ? (data.documents as CustomerDocument[]).map((d) => ({
             ...d,
             uploadedAt: d.uploadedAt instanceof Timestamp ? d.uploadedAt.toDate() : (d.uploadedAt instanceof Date ? d.uploadedAt : new Date()),
           })) : undefined,
@@ -193,6 +175,11 @@ export async function createCustomer(
     if (data.residenceCardNumber !== undefined && data.residenceCardNumber !== null) {
       customerData.residenceCardNumber = data.residenceCardNumber;
     }
+    if (data.expiryDate !== undefined && data.expiryDate !== null) {
+      customerData.expiryDate = data.expiryDate instanceof Date 
+        ? Timestamp.fromDate(data.expiryDate) 
+        : data.expiryDate;
+    }
     if (data.email !== undefined && data.email !== null) {
       customerData.email = data.email;
     }
@@ -235,6 +222,11 @@ export async function updateCustomer(
     }
     if (data.gender !== undefined) updateData.gender = data.gender || null;
     if (data.residenceCardNumber !== undefined) updateData.residenceCardNumber = data.residenceCardNumber || null;
+    if (data.expiryDate !== undefined) {
+      updateData.expiryDate = data.expiryDate 
+        ? (data.expiryDate instanceof Date ? Timestamp.fromDate(data.expiryDate) : data.expiryDate)
+        : null;
+    }
     if (data.email !== undefined) updateData.email = data.email || null;
     if (data.phone !== undefined) updateData.phone = data.phone || null;
     if (data.address !== undefined) updateData.address = data.address || null;
@@ -269,13 +261,13 @@ export async function searchCustomers(queryString: string): Promise<Customer[]> 
     const lowerQuery = queryString.toLowerCase();
     return allCustomers.filter(customer => {
       return (
-        customer.name.last.en.toLowerCase().includes(lowerQuery) ||
-        customer.name.first.en.toLowerCase().includes(lowerQuery) ||
-        customer.name.last.ja.includes(queryString) ||
-        customer.name.first.ja.includes(queryString) ||
-        customer.name.last.kana.includes(queryString) ||
-        customer.name.first.kana.includes(queryString) ||
-        customer.nationality.toLowerCase().includes(lowerQuery) ||
+        (customer.name?.last?.en && customer.name.last.en.toLowerCase().includes(lowerQuery)) ||
+        (customer.name?.first?.en && customer.name.first.en.toLowerCase().includes(lowerQuery)) ||
+        (customer.name?.last?.ja && customer.name.last.ja.includes(queryString)) ||
+        (customer.name?.first?.ja && customer.name.first.ja.includes(queryString)) ||
+        (customer.name?.last?.kana && customer.name.last.kana.includes(queryString)) ||
+        (customer.name?.first?.kana && customer.name.first.kana.includes(queryString)) ||
+        (customer.nationality && customer.nationality.toLowerCase().includes(lowerQuery)) ||
         (customer.email?.toLowerCase().includes(lowerQuery)) ||
         (customer.phone && customer.phone.includes(queryString)) ||
         (customer.residenceCardNumber && customer.residenceCardNumber.includes(queryString))
@@ -300,12 +292,37 @@ export async function uploadCustomerDocument(
   label: string
 ): Promise<string> {
   try {
+    // #region agent log
+    const currentUser = auth.currentUser;
+    const userEmail = currentUser?.email || null;
+    const userId = currentUser?.uid || null;
+    let tokenEmail: string | null = null;
+    let tokenHasEmailClaim: boolean = false;
+    if (currentUser) {
+      try {
+        // カスタムクレームを反映させるために強制的にトークンを再取得
+        const token = await currentUser.getIdToken(true);
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        tokenEmail = payload.email || null;
+        // カスタムクレームのemailを確認
+        tokenHasEmailClaim = payload.email != null;
+        fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'customerService.ts:293',message:'uploadCustomerDocument start',data:{customerId,fileName:file.name,userEmail,userId,tokenEmail,tokenHasEmailClaim,hasAuth:!!currentUser},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+      } catch (e) {
+        fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'customerService.ts:293',message:'token error',data:{error:String(e)},timestamp:Date.now(),sessionId:'debug-session',runId:'run2',hypothesisId:'A'})}).catch(()=>{});
+      }
+    }
+    // #endregion
+    
     // UUIDを生成してファイル名を作成
     const uuid = crypto.randomUUID();
     const fileExtension = file.name.split('.').pop() || '';
     const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
     const fileName = `${fileNameWithoutExt}_${uuid}.${fileExtension}`;
     const storagePath = `customers/${customerId}/documents/${fileName}`;
+    
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'customerService.ts:302',message:'before uploadBytes',data:{storagePath},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     
     // Cloud Storageにアップロード
     const storageRef = ref(storage, storagePath);

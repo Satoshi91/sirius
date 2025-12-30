@@ -12,7 +12,6 @@ import { Customer } from "@/types";
 import { Timestamp } from "firebase/firestore";
 import CustomerFormFields from "@/components/customers/CustomerFormFields";
 import CustomerSearchModal from "@/components/customers/CustomerSearchModal";
-import { DateInput } from "@/components/forms/DateInput";
 import { validateCustomerName } from "@/lib/utils/customerValidation";
 
 // フォームスキーマ定義
@@ -20,7 +19,6 @@ const projectFormSchema = z.object({
   title: z.string().min(1, "案件名は必須です"),
   currentVisaType: z.string().optional(),
   visaType: z.string().min(1, "在留資格は必須です"),
-  expiryDate: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectFormSchema>;
@@ -41,6 +39,7 @@ export default function NewProjectPage() {
     birthday: "",
     gender: "",
     residenceCardNumber: "",
+    expiryDate: "",
     email: "",
     phone: "",
     address: "",
@@ -51,7 +50,6 @@ export default function NewProjectPage() {
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors },
   } = useForm<ProjectFormData>({
     resolver: zodResolver(projectFormSchema),
@@ -59,7 +57,6 @@ export default function NewProjectPage() {
       title: "",
       currentVisaType: "",
       visaType: "",
-      expiryDate: "",
     },
   });
 
@@ -99,6 +96,7 @@ export default function NewProjectPage() {
         customerFormData.append("birthday", newCustomerFormData.birthday);
         customerFormData.append("gender", newCustomerFormData.gender);
         customerFormData.append("residenceCardNumber", newCustomerFormData.residenceCardNumber);
+        customerFormData.append("expiryDate", newCustomerFormData.expiryDate);
         customerFormData.append("email", newCustomerFormData.email);
         customerFormData.append("phone", newCustomerFormData.phone);
         customerFormData.append("address", newCustomerFormData.address);
@@ -125,7 +123,6 @@ export default function NewProjectPage() {
       formDataToSubmit.append("customerId", customerId);
       formDataToSubmit.append("currentVisaType", data.currentVisaType || "");
       formDataToSubmit.append("visaType", data.visaType);
-      formDataToSubmit.append("expiryDate", data.expiryDate || "");
 
       const result = await createProjectAction(formDataToSubmit);
       if (result?.error) {
@@ -286,6 +283,13 @@ export default function NewProjectPage() {
                       : "",
                     gender: selectedCustomer.gender || "",
                     residenceCardNumber: selectedCustomer.residenceCardNumber || "",
+                    expiryDate: selectedCustomer.expiryDate 
+                      ? (selectedCustomer.expiryDate instanceof Date 
+                          ? selectedCustomer.expiryDate.toISOString().split("T")[0]
+                          : (selectedCustomer.expiryDate instanceof Timestamp)
+                            ? selectedCustomer.expiryDate.toDate().toISOString().split("T")[0]
+                            : "")
+                      : "",
                     email: selectedCustomer.email || "",
                     phone: selectedCustomer.phone || "",
                     address: selectedCustomer.address || "",
@@ -342,14 +346,6 @@ export default function NewProjectPage() {
               <p className="mt-1 text-sm text-red-500">{errors.visaType.message}</p>
             )}
           </div>
-
-          <DateInput
-            name="expiryDate"
-            control={control}
-            label="在留期限"
-            placeholder="在留期限を選択"
-            error={errors.expiryDate?.message}
-          />
 
           {error && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">

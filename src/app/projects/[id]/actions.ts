@@ -157,7 +157,6 @@ export async function updateProjectAction(
   const title = formData.get("title") as string;
   const customerId = formData.get("customerId") as string;
   const visaType = formData.get("visaType") as string;
-  const expiryDate = formData.get("expiryDate") as string | null;
   const status = formData.get("status") as Project["status"] | null;
   const paymentStatus = formData.get("paymentStatus") as Project["paymentStatus"] | null;
 
@@ -180,7 +179,6 @@ export async function updateProjectAction(
       title: title.trim(),
       customerId: customerId.trim(),
       visaType: visaType.trim(),
-      expiryDate: expiryDate ? new Date(expiryDate) : null,
       status: status || 'pending',
       paymentStatus: paymentStatus || undefined,
     });
@@ -210,15 +208,6 @@ export async function updateProjectAction(
         if (visaType.trim() !== existingProject.visaType) {
           changedFields.push("申請予定の資格");
           details.visaType = { oldValue: existingProject.visaType, newValue: visaType.trim() };
-        }
-        const newExpiryDate = expiryDate ? new Date(expiryDate) : null;
-        const existingExpiryDate = existingProject.expiryDate ? (existingProject.expiryDate instanceof Date ? existingProject.expiryDate : existingProject.expiryDate.toDate()) : null;
-        if ((newExpiryDate?.getTime() || null) !== (existingExpiryDate?.getTime() || null)) {
-          changedFields.push("在留期限");
-          details.expiryDate = { 
-            oldValue: existingExpiryDate?.toISOString().split('T')[0] || null, 
-            newValue: newExpiryDate?.toISOString().split('T')[0] || null 
-          };
         }
         const newStatus = status || 'pending';
         if (newStatus !== existingProject.status) {

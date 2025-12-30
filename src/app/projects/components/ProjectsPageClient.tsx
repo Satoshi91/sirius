@@ -2,10 +2,11 @@
 
 import { useState, useMemo } from "react";
 import { Project } from "@/types";
-import { Timestamp } from "firebase/firestore";
-import StatsCards from "./StatsCards";
-import SearchFilter from "./SearchFilter";
 import ImmigrationCaseTable from "./ImmigrationCaseTable";
+import { Button } from "@/components/ui/button";
+import { Plus, Search } from "lucide-react";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
 
 interface ProjectsPageClientProps {
   projects: Project[];
@@ -17,7 +18,6 @@ export default function ProjectsPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [visaTypeFilter, setVisaTypeFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("updated_desc");
 
   // 在留資格の一覧を取得（重複を除去）
   const visaTypes = useMemo(() => {
@@ -25,8 +25,8 @@ export default function ProjectsPageClient({
     return Array.from(types).sort();
   }, [projects]);
 
-  // 検索・フィルタ・ソートを組み合わせて適用
-  const filteredAndSortedProjects = useMemo(() => {
+  // 検索・フィルタを組み合わせて適用
+  const filteredProjects = useMemo(() => {
     let result = [...projects];
 
     // 1. 検索クエリでフィルタリング（依頼者名と国籍で検索）
@@ -58,77 +58,40 @@ export default function ProjectsPageClient({
       result = result.filter((project) => project.visaType === visaTypeFilter);
     }
 
-    // 4. ソート
-    const [sortField, sortOrder] = sortBy.split("_");
-    result.sort((a, b) => {
-      let aValue: Date | number | null = null;
-      let bValue: Date | number | null = null;
-
-      if (sortField === "deadline") {
-        aValue = a.expiryDate
-          ? a.expiryDate instanceof Date
-            ? a.expiryDate
-            : (a.expiryDate as Timestamp).toDate()
-          : null;
-        bValue = b.expiryDate
-          ? b.expiryDate instanceof Date
-            ? b.expiryDate
-            : (b.expiryDate as Timestamp).toDate()
-          : null;
-        
-        // nullは最後に配置
-        if (aValue === null && bValue === null) return 0;
-        if (aValue === null && bValue !== null) return 1;
-        if (aValue !== null && bValue === null) return -1;
-        
-        const aTime = (aValue as Date).getTime();
-        const bTime = (bValue as Date).getTime();
-        return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
-      } else if (sortField === "updated") {
-        aValue = a.updatedAt instanceof Date
-          ? a.updatedAt
-          : (a.updatedAt as Timestamp).toDate();
-        bValue = b.updatedAt instanceof Date
-          ? b.updatedAt
-          : (b.updatedAt as Timestamp).toDate();
-        
-        const aTime = (aValue as Date).getTime();
-        const bTime = (bValue as Date).getTime();
-        return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
-      } else if (sortField === "created") {
-        aValue = a.createdAt instanceof Date
-          ? a.createdAt
-          : (a.createdAt as Timestamp).toDate();
-        bValue = b.createdAt instanceof Date
-          ? b.createdAt
-          : (b.createdAt as Timestamp).toDate();
-        
-        const aTime = (aValue as Date).getTime();
-        const bTime = (bValue as Date).getTime();
-        return sortOrder === "asc" ? aTime - bTime : bTime - aTime;
-      }
-
-      return 0;
-    });
-
     return result;
-  }, [projects, searchQuery, statusFilter, visaTypeFilter, sortBy]);
+  }, [projects, searchQuery, statusFilter, visaTypeFilter]);
 
   return (
     <div className="space-y-6">
-      <StatsCards projects={projects} />
-      <SearchFilter
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
+      <div className="flex items-center gap-4">
+        <h1 className="text-3xl font-bold text-blue-900 whitespace-nowrap">
+          案件管理
+        </h1>
+        <div className="flex-1 max-w-md relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="依頼者名や国籍で検索..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full border-blue-200 focus:border-blue-500 focus:ring-blue-500"
+          />
+        </div>
+        <Link href="/projects/new" className="ml-auto">
+          <Button className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap">
+            <Plus className="h-4 w-4 mr-2" />
+            新規登録
+          </Button>
+        </Link>
+      </div>
+      <ImmigrationCaseTable 
+        projects={filteredProjects}
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
         visaTypeFilter={visaTypeFilter}
         onVisaTypeFilterChange={setVisaTypeFilter}
-        sortBy={sortBy}
-        onSortByChange={setSortBy}
         visaTypes={visaTypes}
       />
-      <ImmigrationCaseTable projects={filteredAndSortedProjects} />
     </div>
   );
 }

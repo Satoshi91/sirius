@@ -1,13 +1,11 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { Customer } from "@/types";
 import CustomerList from "./CustomerList";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { deleteCustomerAction } from "../actions";
-import { toast } from "sonner";
 // CustomersPageClient - 顧客一覧ページのクライアントコンポーネント
 
 interface CustomersPageClientProps {
@@ -18,26 +16,8 @@ export default function CustomersPageClient({
   initialCustomers,
 }: CustomersPageClientProps) {
   const router = useRouter();
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
+  const [customers] = useState<Customer[]>(initialCustomers);
   const [searchQuery, setSearchQuery] = useState("");
-  const [, startTransition] = useTransition();
-
-  const handleDelete = async (customerId: string) => {
-    if (!confirm("この顧客を削除してもよろしいですか？")) {
-      return;
-    }
-
-    startTransition(async () => {
-      const result = await deleteCustomerAction(customerId);
-      if (result.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("顧客を削除しました");
-        setCustomers((prev) => prev.filter((c) => c.id !== customerId));
-        router.refresh();
-      }
-    });
-  };
 
   const filteredCustomers = customers.filter((customer) => {
     if (!searchQuery.trim()) return true;
@@ -58,7 +38,10 @@ export default function CustomersPageClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center gap-4">
+        <h1 className="text-3xl font-bold text-blue-900 whitespace-nowrap">
+          顧客管理
+        </h1>
         <div className="flex-1 max-w-md">
           <input
             type="text"
@@ -70,14 +53,14 @@ export default function CustomersPageClient({
         </div>
         <Button
           onClick={() => router.push("/customers/new")}
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap ml-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
-          新規顧客
+          新規登録
         </Button>
       </div>
 
-      <CustomerList customers={filteredCustomers} onDelete={handleDelete} />
+      <CustomerList customers={filteredCustomers} />
     </div>
   );
 }

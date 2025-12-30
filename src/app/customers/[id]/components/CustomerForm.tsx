@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useCallback } from "react";
 import { Customer } from "@/types";
 import { Timestamp } from "firebase/firestore";
 import CustomerFormFields from "@/components/customers/CustomerFormFields";
@@ -34,24 +34,33 @@ export default function CustomerForm({
   onCancel,
   isCreating = false,
 }: CustomerFormProps) {
+  console.log("[CustomerForm] Component rendered", { customer, isCreating });
+  
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   
-  const [formData, setFormData] = useState({
-    name: customer?.name || {
-      last: { en: "", ja: "", kana: "" },
-      first: { en: "", ja: "", kana: "" },
-    },
-    nationality: customer?.nationality || "",
-    birthday: formatDateForInput(customer?.birthday),
-    gender: customer?.gender || "",
-    residenceCardNumber: customer?.residenceCardNumber || "",
-    email: customer?.email || "",
-    phone: customer?.phone || "",
-    address: customer?.address || "",
-    notes: customer?.notes || "",
+  const [formData, setFormData] = useState(() => {
+    const initialData = {
+      name: customer?.name || {
+        last: { en: "", ja: "", kana: "" },
+        first: { en: "", ja: "", kana: "" },
+      },
+      nationality: customer?.nationality || "",
+      birthday: formatDateForInput(customer?.birthday),
+      gender: customer?.gender || "",
+      residenceCardNumber: customer?.residenceCardNumber || "",
+      expiryDate: formatDateForInput(customer?.expiryDate),
+      email: customer?.email || "",
+      phone: customer?.phone || "",
+      address: customer?.address || "",
+      notes: customer?.notes || "",
+    };
+    console.log("[CustomerForm] Initial formData:", initialData);
+    return initialData;
   });
+  
+  console.log("[CustomerForm] Current formData:", formData);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -82,6 +91,7 @@ export default function CustomerForm({
     formDataToSubmit.append("birthday", formData.birthday);
     formDataToSubmit.append("gender", formData.gender);
     formDataToSubmit.append("residenceCardNumber", formData.residenceCardNumber);
+    formDataToSubmit.append("expiryDate", formData.expiryDate);
     formDataToSubmit.append("email", formData.email);
     formDataToSubmit.append("phone", formData.phone);
     formDataToSubmit.append("address", formData.address);
@@ -101,7 +111,12 @@ export default function CustomerForm({
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    console.log("[CustomerForm] handleChange called:", { name, value, currentFormData: formData });
+    setFormData((prev) => {
+      const newData = { ...prev, [name]: value };
+      console.log("[CustomerForm] formData updated:", { prev, newData });
+      return newData;
+    });
     // エラーをクリア
     if (fieldErrors[name]) {
       setFieldErrors((prev) => {
@@ -116,18 +131,28 @@ export default function CustomerForm({
   };
 
   const handleNameChange = (path: string, value: string) => {
-    const [, , lastOrFirst, enJaOrKana] = path.split('.');
+    console.log("[CustomerForm] handleNameChange called:", { path, value, currentFormData: formData });
+    // path は 'name.last.en' のような形式
+    // split('.') で ['name', 'last', 'en'] になる
+    const parts = path.split('.');
+    const lastOrFirst = parts[1]; // 'last' または 'first'
+    const enJaOrKana = parts[2]; // 'en', 'ja', 'kana'
+    console.log("[CustomerForm] Parsed path:", { parts, lastOrFirst, enJaOrKana });
     
-    setFormData((prev) => ({
-      ...prev,
-      name: {
-        ...prev.name,
-        [lastOrFirst]: {
-          ...prev.name[lastOrFirst as 'last' | 'first'],
-          [enJaOrKana]: value,
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        name: {
+          ...prev.name,
+          [lastOrFirst]: {
+            ...prev.name[lastOrFirst as 'last' | 'first'],
+            [enJaOrKana]: value,
+          },
         },
-      },
-    }));
+      };
+      console.log("[CustomerForm] formData updated (name):", { prev, newData });
+      return newData;
+    });
     
     // エラーをクリア
     if (fieldErrors[path]) {
@@ -150,8 +175,44 @@ export default function CustomerForm({
     }
   };
 
+  // 開発環境かどうかを判定
+  const isDevelopment = process.env.NODE_ENV !== "production";
+
+  // テストデータをセットするハンドラー
+  const handleSetTestData = useCallback(() => {
+    setFormData({
+      name: {
+        last: { en: "Tanaka", ja: "田中", kana: "タナカ" },
+        first: { en: "Taro", ja: "太郎", kana: "タロウ" },
+      },
+      nationality: "日本",
+      birthday: "1990-01-01",
+      gender: "male",
+      residenceCardNumber: "AB12345678CD",
+      expiryDate: "2025-12-31",
+      email: "test@example.com",
+      phone: "090-1234-5678",
+      address: "東京都渋谷区神南1-2-3",
+      notes: "テストデータ",
+    });
+    // エラー状態をクリア
+    setError(null);
+    setFieldErrors({});
+  }, []);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
+      {isDevelopment && isCreating && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleSetTestData}
+            className="text-xs text-zinc-500 hover:text-zinc-700 underline px-2 py-1 rounded transition-colors"
+          >
+            テストデータ入力
+          </button>
+        </div>
+      )}
       <CustomerFormFields
         formData={formData}
         onChange={handleChange}

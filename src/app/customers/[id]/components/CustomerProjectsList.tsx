@@ -12,7 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { Eye } from "lucide-react";
+import { FileText } from "lucide-react";
 import { Timestamp } from "firebase/firestore";
 
 interface CustomerProjectsListProps {
@@ -71,7 +71,7 @@ export default function CustomerProjectsList({
                 <div className="text-gray-700">{project.visaType}</div>
               </TableCell>
               <TableCell>
-                <div className="text-gray-700">{formatDate(project.expiryDate)}</div>
+                <div className="text-gray-700">{formatDate(project.customer?.expiryDate)}</div>
               </TableCell>
               <TableCell>
                 <Badge 
@@ -84,7 +84,7 @@ export default function CustomerProjectsList({
               <TableCell className="text-right">
                 <Link href={`/projects/${project.id}`}>
                   <Button variant="outline" size="sm" className="gap-2">
-                    <Eye className="h-3 w-3" />
+                    <FileText className="h-3 w-3" />
                     詳細
                   </Button>
                 </Link>

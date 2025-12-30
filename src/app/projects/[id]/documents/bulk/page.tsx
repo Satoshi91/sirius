@@ -193,7 +193,7 @@ export default function BulkDocumentPage() {
     return diffDays;
   };
 
-  const daysUntilExpiry = project ? getDaysUntilExpiry(project.expiryDate) : null;
+  const daysUntilExpiry = project ? getDaysUntilExpiry(project.customer?.expiryDate ?? null) : null;
   const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 90 && daysUntilExpiry >= 0;
 
   return (
@@ -266,8 +266,8 @@ export default function BulkDocumentPage() {
                             </Badge>
                           )}
                         </div>
-                        {project.expiryDate ? (
-                          <p className="text-black font-semibold">{formatDate(project.expiryDate)}</p>
+                        {project.customer?.expiryDate ? (
+                          <p className="text-black font-semibold">{formatDate(project.customer.expiryDate)}</p>
                         ) : (
                           <p className="text-gray-700">-</p>
                         )}

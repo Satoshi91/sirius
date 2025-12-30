@@ -1,6 +1,6 @@
 "use client";
 
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
@@ -8,8 +8,9 @@ import Link from "next/link";
 import CustomerFormWrapper from "./CustomerFormWrapper";
 import CustomerProjectsList from "./CustomerProjectsList";
 import CustomerDocumentsSection from "./CustomerDocumentsSection";
+import CustomerHistoryList from "./CustomerHistoryList";
 import NoteTimeline from "@/components/notes/NoteTimeline";
-import { Customer, Project } from "@/types";
+import { Customer, Project, CustomerActivityLog } from "@/types";
 import { addCustomerNoteAction } from "@/app/customers/actions";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -18,12 +19,18 @@ interface CustomerTabsProps {
   customerId: string;
   customer: Customer;
   projects: Project[];
+  history: CustomerActivityLog[];
+  activeTab: string;
+  onTabChange: (value: string) => void;
 }
 
 export default function CustomerTabs({
   customerId,
   customer,
   projects,
+  history,
+  activeTab,
+  onTabChange,
 }: CustomerTabsProps) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -39,14 +46,7 @@ export default function CustomerTabs({
   };
 
   return (
-    <Tabs defaultValue="details" className="w-full">
-      <TabsList className="mb-6">
-        <TabsTrigger value="details">詳細・編集</TabsTrigger>
-        <TabsTrigger value="documents">重要書類</TabsTrigger>
-        <TabsTrigger value="projects">関連案件</TabsTrigger>
-        <TabsTrigger value="notes">メモ</TabsTrigger>
-      </TabsList>
-
+    <Tabs value={activeTab} onValueChange={onTabChange} className="w-full">
       <TabsContent value="details">
         <Card>
           <CardHeader>
@@ -97,6 +97,17 @@ export default function CustomerTabs({
                 return result;
               }}
             />
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="history">
+        <Card>
+          <CardHeader>
+            <CardTitle>履歴</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <CustomerHistoryList logs={history} />
           </CardContent>
         </Card>
       </TabsContent>
