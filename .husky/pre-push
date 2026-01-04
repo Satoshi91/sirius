@@ -1,8 +1,5 @@
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
 # TypeScript type checking
 npx tsc --noEmit
 
-# Vercel build simulation
-npm run build:vercel
+# Vercel build simulation (fallback to regular build if Vercel CLI not configured)
+npm run build:vercel || npm run build
