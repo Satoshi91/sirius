@@ -2,7 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithPopup, GoogleAuthProvider, signInWithCustomToken } from "firebase/auth";
+import {
+  signInWithPopup,
+  GoogleAuthProvider,
+  signInWithCustomToken,
+} from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { handleLoginSuccess, handleGuestLogin } from "./actions";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -13,14 +17,15 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   // 既にログインしている場合はリダイレクト
+  // 認証状態の読み込みが完了してからリダイレクトを実行（無限ループを防ぐため）
   useEffect(() => {
-    if (user) {
+    if (!authLoading && user) {
       router.push("/projects");
     }
-  }, [user, router]);
+  }, [user, authLoading, router]);
 
   const handleGoogleSignIn = async () => {
     setError(null);
@@ -28,13 +33,15 @@ export default function LoginPage() {
 
     try {
       const provider = new GoogleAuthProvider();
-      
+
       // Firebase AuthenticationでGoogleログイン
       const userCredential = await signInWithPopup(auth, provider);
       const firebaseUser = userCredential.user;
 
       if (!firebaseUser.email) {
-        throw new Error("Googleアカウントからメールアドレスを取得できませんでした");
+        throw new Error(
+          "Googleアカウントからメールアドレスを取得できませんでした"
+        );
       }
 
       // IDトークンを取得
@@ -58,7 +65,9 @@ export default function LoginPage() {
         try {
           errorData = await cookieResponse.json();
         } catch {
-          errorData = { error: `HTTP ${cookieResponse.status}: ${cookieResponse.statusText}` };
+          errorData = {
+            error: `HTTP ${cookieResponse.status}: ${cookieResponse.statusText}`,
+          };
         }
         console.error("Cookie setting error:", errorData);
         throw new Error(errorData.error || "認証Cookieの設定に失敗しました");
@@ -85,16 +94,20 @@ export default function LoginPage() {
       window.location.href = "/projects";
     } catch (error: unknown) {
       console.error("Error logging in:", error);
-      
+
       // エラーメッセージを日本語化
       let errorMessage = "ログインに失敗しました。もう一度お試しください。";
       const firebaseError = error as { code?: string; message?: string };
       if (firebaseError.code === "auth/popup-closed-by-user") {
         errorMessage = "ログインがキャンセルされました。";
       } else if (firebaseError.code === "auth/popup-blocked") {
-        errorMessage = "ポップアップがブロックされました。ブラウザの設定を確認してください。";
-      } else if (firebaseError.code === "auth/account-exists-with-different-credential") {
-        errorMessage = "このメールアドレスは既に別の認証方法で登録されています。";
+        errorMessage =
+          "ポップアップがブロックされました。ブラウザの設定を確認してください。";
+      } else if (
+        firebaseError.code === "auth/account-exists-with-different-credential"
+      ) {
+        errorMessage =
+          "このメールアドレスは既に別の認証方法で登録されています。";
       } else if (firebaseError.message) {
         errorMessage = firebaseError.message;
       }
@@ -123,11 +136,16 @@ export default function LoginPage() {
       }
 
       // Firebase Authenticationでカスタムトークンを使用してログイン
-      const userCredential = await signInWithCustomToken(auth, result.customToken);
+      const userCredential = await signInWithCustomToken(
+        auth,
+        result.customToken
+      );
       const firebaseUser = userCredential.user;
 
       if (!firebaseUser.email) {
-        throw new Error("ゲストユーザーからメールアドレスを取得できませんでした");
+        throw new Error(
+          "ゲストユーザーからメールアドレスを取得できませんでした"
+        );
       }
 
       // IDトークンを取得
@@ -151,7 +169,9 @@ export default function LoginPage() {
         try {
           errorData = await cookieResponse.json();
         } catch {
-          errorData = { error: `HTTP ${cookieResponse.status}: ${cookieResponse.statusText}` };
+          errorData = {
+            error: `HTTP ${cookieResponse.status}: ${cookieResponse.statusText}`,
+          };
         }
         console.error("Cookie setting error:", errorData);
         throw new Error(errorData.error || "認証Cookieの設定に失敗しました");
@@ -178,9 +198,10 @@ export default function LoginPage() {
       window.location.href = "/projects";
     } catch (error: unknown) {
       console.error("Error logging in as guest:", error);
-      
+
       // エラーメッセージを日本語化
-      let errorMessage = "ゲストログインに失敗しました。もう一度お試しください。";
+      let errorMessage =
+        "ゲストログインに失敗しました。もう一度お試しください。";
       const firebaseError = error as { message?: string };
       if (firebaseError.message) {
         errorMessage = firebaseError.message;
@@ -203,14 +224,14 @@ export default function LoginPage() {
         <h2 className="text-xl font-semibold text-center mb-8 text-zinc-700">
           ログイン
         </h2>
-        
+
         <div className="space-y-4">
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md text-red-700 text-sm">
               {error}
             </div>
           )}
-          
+
           <Button
             onClick={handleGoogleSignIn}
             disabled={loading}
@@ -230,7 +251,7 @@ export default function LoginPage() {
                   <span className="px-2 bg-white text-zinc-500">または</span>
                 </div>
               </div>
-              
+
               <Button
                 onClick={handleGuestSignIn}
                 disabled={loading}
@@ -239,7 +260,7 @@ export default function LoginPage() {
               >
                 {loading ? "ログイン中..." : "ゲストログイン（開発用）"}
               </Button>
-              
+
               <p className="text-xs text-zinc-500 text-center">
                 ゲストログインは開発環境でのみ利用可能です
               </p>
@@ -250,4 +271,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

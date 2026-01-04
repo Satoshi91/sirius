@@ -11,12 +11,28 @@ export async function middleware(request: NextRequest) {
 
   // Cookieから認証トークンを確認
   const authToken = request.cookies.get("AuthToken")?.value;
-  
+
   if (!authToken) {
     // 未認証の場合はログインページにリダイレクト
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Cookieが有効なJWT形式かどうかを簡単にチェック（軽量な処理）
+  // JWTは3つの部分（header.payload.signature）に分かれているため、ドットが2つ必要
+  const tokenParts = authToken.split(".");
+  const isValidJWTFormat =
+    tokenParts.length === 3 && tokenParts.every((part) => part.length > 0);
+
+  if (!isValidJWTFormat) {
+    // 無効なCookie形式の場合は、Cookieを削除してログインページにリダイレクト
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("redirect", pathname);
+    const response = NextResponse.redirect(loginUrl);
+    // 無効なCookieを削除
+    response.cookies.delete("AuthToken");
+    return response;
   }
 
   // 認証済みの場合はそのまま通過
@@ -36,4 +52,3 @@ export const config = {
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
-

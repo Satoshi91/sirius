@@ -5,8 +5,17 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
+    "build:vercel": "vercel build",
     "start": "next start",
     "lint": "eslint",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,yml,yaml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md,yml,yaml}\"",
+    "knip": "knip",
+    "knip:fix": "knip --fix",
+    "secretlint": "secretlint \"**/*\"",
+    "check": "npm run type-check && npm run lint && npm run format:check && npm run knip && npm run secretlint",
+    "fix": "npm run format && npm run lint -- --fix && npm run knip:fix",
+    "type-check": "tsc --noEmit",
     "seed": "tsx scripts/seedFirebase.ts",
     "seed:clear": "tsx scripts/seedFirebase.ts --clear",
     "prepare": "husky"
@@ -43,6 +52,8 @@
     "zod": "^4.2.1"
   },
   "devDependencies": {
+    "@secretlint/secretlint-rule-preset-recommend": "^11.2.5",
+    "secretlint": "^11.2.5",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -50,8 +61,12 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "husky": "^9.0.0",
+    "knip": "^5.19.1",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.3.3",
     "tailwindcss": "^4",
     "tsx": "^4.0.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^50.1.3"
   }
 }

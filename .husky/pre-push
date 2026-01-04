@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-npm run build
+# TypeScript type checking
+npx tsc --noEmit
 
-
+# Vercel build simulation
+npm run build:vercel

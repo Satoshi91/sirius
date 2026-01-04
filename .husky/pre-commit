@@ -1,2 +1,2 @@
-npx tsc --noEmit
-npm run lint
+npx lint-staged
+npx secretlint "**/*" "!.env.local" "!VERCEL_ENV_*.md" --secretlintignore .secretlintignore || true
