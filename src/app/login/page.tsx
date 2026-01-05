@@ -216,7 +216,10 @@ export default function LoginPage() {
   };
 
   // 開発環境かどうかを判定（クライアント側）
-  const isDevelopment = process.env.NODE_ENV !== "production";
+  // ローカル開発環境またはstaging環境（preview環境）でもゲストログインを有効化
+  const isDevelopment =
+    process.env.NODE_ENV !== "production" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-50">

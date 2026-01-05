@@ -17,15 +17,19 @@ export async function handleLoginSuccess(email: string, displayName?: string) {
 
     // メールアドレスでFirestoreのusersコレクションをチェック
     const userProfile = await getUserByEmail(email);
-    
+
     // ユーザーが存在しない場合はログイン拒否
     if (!userProfile) {
-      return { error: "このアカウントは登録されていません。管理者に連絡してください。" };
+      return {
+        error: "このアカウントは登録されていません。管理者に連絡してください。",
+      };
     }
 
     // ユーザーが無効化されている場合はログイン拒否
     if (!userProfile.isActive) {
-      return { error: "このアカウントは無効化されています。管理者に連絡してください。" };
+      return {
+        error: "このアカウントは無効化されています。管理者に連絡してください。",
+      };
     }
 
     // Firebase Admin SDKでカスタムクレームとしてemailを設定
@@ -49,21 +53,28 @@ export async function handleLoginSuccess(email: string, displayName?: string) {
 
       // カスタムクレームとしてemailを設定
       // #region agent log
-      console.log(`[DEBUG] Setting custom claims for uid: ${uid}, email: ${email}`);
+      console.log(
+        `[DEBUG] Setting custom claims for uid: ${uid}, email: ${email}`
+      );
       // #endregion
       await adminAuth.setCustomUserClaims(uid, {
         email: email,
         email_verified: true,
       });
       // #region agent log
-      console.log(`[DEBUG] Custom claims set successfully for uid: ${uid}, email: ${email}`);
+      console.log(
+        `[DEBUG] Custom claims set successfully for uid: ${uid}, email: ${email}`
+      );
       // #endregion
     } catch (error) {
       // カスタムクレームの設定に失敗してもログインは継続
       // Storage Rulesでrequest.auth.token.emailが利用できない場合のフォールバックがあるため
       console.warn("Failed to set custom claims:", error);
       // #region agent log
-      console.error(`[DEBUG] Failed to set custom claims for email: ${email}`, error);
+      console.error(
+        `[DEBUG] Failed to set custom claims for email: ${email}`,
+        error
+      );
       // #endregion
     }
 
@@ -86,8 +97,12 @@ export async function handleLoginSuccess(email: string, displayName?: string) {
  */
 export async function handleGuestLogin() {
   try {
-    // 開発環境のみで有効
-    if (process.env.NODE_ENV === "production") {
+    // 開発環境またはstaging環境（preview環境）でのみ有効
+    // 本番環境（production）では無効
+    const isProduction =
+      process.env.NODE_ENV === "production" &&
+      process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
+    if (isProduction) {
       return { error: "ゲストログインは開発環境でのみ利用可能です。" };
     }
 
@@ -146,21 +161,31 @@ export async function handleGuestLogin() {
     // これにより、Storage Rulesでrequest.auth.token.emailにアクセスできるようになります
     try {
       // #region agent log
-      console.log(`[DEBUG] Setting custom claims for guest user uid: ${guestEmail}, email: ${guestEmail}`);
+      console.log(
+        `[DEBUG] Setting custom claims for guest user uid: ${guestEmail}, email: ${guestEmail}`
+      );
       // #endregion
       await adminAuth.setCustomUserClaims(guestEmail, {
         email: guestEmail,
         email_verified: true,
       });
-      console.log("ゲストユーザーのカスタムクレームを設定しました:", guestEmail);
+      console.log(
+        "ゲストユーザーのカスタムクレームを設定しました:",
+        guestEmail
+      );
       // #region agent log
-      console.log(`[DEBUG] Custom claims set successfully for guest user uid: ${guestEmail}`);
+      console.log(
+        `[DEBUG] Custom claims set successfully for guest user uid: ${guestEmail}`
+      );
       // #endregion
     } catch (error) {
       // カスタムクレームの設定に失敗してもログインは継続
       console.warn("Failed to set custom claims for guest user:", error);
       // #region agent log
-      console.error(`[DEBUG] Failed to set custom claims for guest user uid: ${guestEmail}`, error);
+      console.error(
+        `[DEBUG] Failed to set custom claims for guest user uid: ${guestEmail}`,
+        error
+      );
       // #endregion
     }
 
@@ -170,7 +195,8 @@ export async function handleGuestLogin() {
     return { success: true, customToken };
   } catch (error) {
     console.error("Error handling guest login:", error);
-    return { error: "ゲストログイン処理に失敗しました。もう一度お試しください。" };
+    return {
+      error: "ゲストログイン処理に失敗しました。もう一度お試しください。",
+    };
   }
 }
-
