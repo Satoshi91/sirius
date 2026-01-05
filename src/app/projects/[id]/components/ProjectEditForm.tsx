@@ -19,13 +19,15 @@ export default function ProjectEditForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(project.customerId || null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    project.customerId || null
+  );
 
   const [formData, setFormData] = useState({
     title: project.title,
     visaType: project.visaType,
     status: project.status,
-    paymentStatus: project.paymentStatus || '',
+    paymentStatus: project.paymentStatus || "",
   });
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -41,9 +43,6 @@ export default function ProjectEditForm({
     if (!selectedCustomerId) {
       newErrors.customerId = "顧客は必須です";
     }
-    if (!formData.visaType.trim()) {
-      newErrors.visaType = "在留資格は必須です";
-    }
     if (Object.keys(newErrors).length > 0) {
       setFieldErrors(newErrors);
       return;
@@ -52,7 +51,7 @@ export default function ProjectEditForm({
     const formDataToSubmit = new FormData();
     formDataToSubmit.append("title", formData.title);
     formDataToSubmit.append("customerId", selectedCustomerId!);
-    formDataToSubmit.append("visaType", formData.visaType);
+    formDataToSubmit.append("visaType", formData.visaType || "");
     formDataToSubmit.append("status", formData.status);
     if (formData.paymentStatus) {
       formDataToSubmit.append("paymentStatus", formData.paymentStatus);
@@ -70,7 +69,9 @@ export default function ProjectEditForm({
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -125,7 +126,7 @@ export default function ProjectEditForm({
           htmlFor="visaType"
           className="block text-sm font-medium text-black mb-2"
         >
-          在留資格 <span className="text-red-500">*</span>
+          在留資格
         </label>
         <input
           type="text"
@@ -214,4 +215,3 @@ export default function ProjectEditForm({
     </form>
   );
 }
-

@@ -1,6 +1,10 @@
 "use client";
 
-import { Project, PROJECT_STATUS_LABELS, PROJECT_STATUS_OPTIONS } from "@/types";
+import {
+  Project,
+  PROJECT_STATUS_LABELS,
+  PROJECT_STATUS_OPTIONS,
+} from "@/types";
 import {
   Table,
   TableBody,
@@ -47,14 +51,14 @@ export default function ImmigrationCaseTable({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const isDevelopment = process.env.NODE_ENV === "development";
-  
+
   const now = new Date();
   const sevenDaysLater = new Date(now);
   sevenDaysLater.setDate(now.getDate() + 7);
 
   const handleDelete = (projectId: string) => {
     if (!isDevelopment) return;
-    
+
     startTransition(async () => {
       const result = await deleteProjectAction(projectId);
       if (result?.error) {
@@ -66,7 +70,9 @@ export default function ImmigrationCaseTable({
     });
   };
 
-  const formatShortDate = (date: Date | Timestamp | null | undefined): string => {
+  const formatShortDate = (
+    date: Date | Timestamp | null | undefined
+  ): string => {
     if (!date) return "-";
     const dateObj = date instanceof Date ? date : (date as Timestamp).toDate();
     return dateObj.toLocaleDateString("ja-JP", {
@@ -76,14 +82,21 @@ export default function ImmigrationCaseTable({
     });
   };
 
-  const isDeadlineNear = (expiryDate: Date | Timestamp | null | undefined): boolean => {
+  const isDeadlineNear = (
+    expiryDate: Date | Timestamp | null | undefined
+  ): boolean => {
     if (!expiryDate) return false;
-    const expiryDateObj = expiryDate instanceof Date ? expiryDate : (expiryDate as Timestamp).toDate();
+    const expiryDateObj =
+      expiryDate instanceof Date
+        ? expiryDate
+        : (expiryDate as Timestamp).toDate();
     const expiry = expiryDateObj;
     return expiry >= now && expiry <= sevenDaysLater;
   };
 
-  const getStatusBadgeVariant = (status: 'active' | 'pending' | 'completed') => {
+  const getStatusBadgeVariant = (
+    status: "active" | "pending" | "completed"
+  ) => {
     if (status === "completed") return "default";
     if (status === "active") return "secondary";
     return "outline";
@@ -98,17 +111,21 @@ export default function ImmigrationCaseTable({
   }
 
   return (
-    <div className="rounded-md border border-blue-200">
+    <div>
       <Table>
         <TableHeader>
           <TableRow className="bg-blue-50">
+            <TableHead className="w-[100px]"></TableHead>
             <TableHead className="w-[120px]">期限</TableHead>
             <TableHead>依頼者名</TableHead>
             <TableHead className="w-[100px]">国籍</TableHead>
             <TableHead className="w-[150px]">
               <div className="flex flex-col gap-2">
                 <span>申請在留資格</span>
-                <Select value={visaTypeFilter} onValueChange={onVisaTypeFilterChange}>
+                <Select
+                  value={visaTypeFilter}
+                  onValueChange={onVisaTypeFilterChange}
+                >
                   <SelectTrigger className="h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="全て" />
                   </SelectTrigger>
@@ -126,7 +143,10 @@ export default function ImmigrationCaseTable({
             <TableHead className="w-[120px]">
               <div className="flex flex-col gap-2">
                 <span>進捗ステータス</span>
-                <Select value={statusFilter} onValueChange={onStatusFilterChange}>
+                <Select
+                  value={statusFilter}
+                  onValueChange={onStatusFilterChange}
+                >
                   <SelectTrigger className="h-8 text-xs border-blue-200 focus:border-blue-500 focus:ring-blue-500">
                     <SelectValue placeholder="全て" />
                   </SelectTrigger>
@@ -142,7 +162,9 @@ export default function ImmigrationCaseTable({
               </div>
             </TableHead>
             <TableHead className="w-[120px]">入金ステータス</TableHead>
-            <TableHead className="w-[100px] text-right">操作</TableHead>
+            {isDevelopment && (
+              <TableHead className="w-[100px] text-right"></TableHead>
+            )}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -155,13 +177,25 @@ export default function ImmigrationCaseTable({
                 className="hover:bg-blue-50/50 transition-colors"
               >
                 <TableCell>
+                  <Link href={`/projects/${project.id}`}>
+                    <Button variant="outline" size="sm" className="gap-2">
+                      <FileText className="h-3 w-3" />
+                      詳細
+                    </Button>
+                  </Link>
+                </TableCell>
+                <TableCell>
                   {expiryDate ? (
                     <div className="flex items-center gap-2">
                       {deadlineNear && (
                         <AlertCircle className="h-4 w-4 text-red-500" />
                       )}
                       <span
-                        className={deadlineNear ? "text-red-600 font-semibold" : "text-gray-700"}
+                        className={
+                          deadlineNear
+                            ? "text-red-600 font-semibold"
+                            : "text-gray-700"
+                        }
                       >
                         {formatShortDate(expiryDate)}
                       </span>
@@ -188,7 +222,10 @@ export default function ImmigrationCaseTable({
                 </TableCell>
                 <TableCell>
                   {project.customer?.nationality ? (
-                    <Badge variant="outline" className="bg-blue-50 border-blue-200 text-gray-700">
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50 border-blue-200 text-gray-700"
+                    >
                       {project.customer.nationality}
                     </Badge>
                   ) : (
@@ -203,9 +240,13 @@ export default function ImmigrationCaseTable({
                   )}
                 </TableCell>
                 <TableCell>
-                  <Badge 
+                  <Badge
                     variant={getStatusBadgeVariant(project.status)}
-                    className={getStatusBadgeVariant(project.status) === "outline" ? "text-gray-700" : ""}
+                    className={
+                      getStatusBadgeVariant(project.status) === "outline"
+                        ? "text-gray-700"
+                        : ""
+                    }
                   >
                     {PROJECT_STATUS_LABELS[project.status]}
                   </Badge>
@@ -213,28 +254,20 @@ export default function ImmigrationCaseTable({
                 <TableCell>
                   <PaymentStatusToggle project={project} />
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link href={`/projects/${project.id}`}>
-                      <Button variant="outline" size="sm" className="gap-2">
-                        <FileText className="h-3 w-3" />
-                        詳細
-                      </Button>
-                    </Link>
-                    {isDevelopment && (
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="gap-2"
-                        onClick={() => handleDelete(project.id)}
-                        disabled={isPending}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        削除
-                      </Button>
-                    )}
-                  </div>
-                </TableCell>
+                {isDevelopment && (
+                  <TableCell className="text-right">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className="gap-2"
+                      onClick={() => handleDelete(project.id)}
+                      disabled={isPending}
+                    >
+                      <Trash2 className="h-3 w-3" />
+                      削除
+                    </Button>
+                  </TableCell>
+                )}
               </TableRow>
             );
           })}
@@ -243,4 +276,3 @@ export default function ImmigrationCaseTable({
     </div>
   );
 }
-

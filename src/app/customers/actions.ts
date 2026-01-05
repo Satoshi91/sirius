@@ -1,10 +1,24 @@
 "use server";
 
-import { getCustomers, getCustomer, createCustomer, updateCustomer, deleteCustomer, searchCustomers, uploadCustomerDocument, deleteCustomerDocument, addCustomerNote } from "@/lib/services/customerService";
+import {
+  getCustomers,
+  getCustomer,
+  createCustomer,
+  updateCustomer,
+  deleteCustomer,
+  searchCustomers,
+  uploadCustomerDocument,
+  deleteCustomerDocument,
+  addCustomerNote,
+  listCustomersPaginated,
+} from "@/lib/services/customerService";
 import { getProjectsByCustomerId } from "@/lib/services/projectService";
 import { requireAuth, getCurrentUser } from "@/lib/auth/auth";
 import { validateCustomerName } from "@/lib/utils/customerValidation";
-import { createCustomerHistory, getCustomerHistory } from "@/lib/services/customerHistoryService";
+import {
+  createCustomerHistory,
+  getCustomerHistory,
+} from "@/lib/services/customerHistoryService";
 
 export async function getCustomersAction() {
   await requireAuth();
@@ -33,7 +47,7 @@ export async function getCustomerAction(id: string) {
 
 export async function createCustomerAction(formData: FormData) {
   await requireAuth();
-  
+
   const name = {
     last: {
       en: (formData.get("name.last.en") as string) || "",
@@ -49,7 +63,9 @@ export async function createCustomerAction(formData: FormData) {
   const nationality = formData.get("nationality") as string;
   const birthday = formData.get("birthday") as string | null;
   const gender = formData.get("gender") as string | null;
-  const residenceCardNumber = formData.get("residenceCardNumber") as string | null;
+  const residenceCardNumber = formData.get("residenceCardNumber") as
+    | string
+    | null;
   const expiryDate = formData.get("expiryDate") as string | null;
   const email = formData.get("email") as string | null;
   const phone = formData.get("phone") as string | null;
@@ -97,7 +113,8 @@ export async function createCustomerAction(formData: FormData) {
     try {
       const user = await getCurrentUser();
       if (user) {
-        const customerName = `${name.last.ja || name.last.en} ${name.first.ja || name.first.en}`.trim();
+        const customerName =
+          `${name.last.ja || name.last.en} ${name.first.ja || name.first.en}`.trim();
         await createCustomerHistory(customerId, {
           actionType: "customer_created",
           description: `顧客「${customerName}」を新規登録しました`,
@@ -120,7 +137,7 @@ export async function createCustomerAction(formData: FormData) {
 
 export async function updateCustomerAction(id: string, formData: FormData) {
   await requireAuth();
-  
+
   const name = {
     last: {
       en: (formData.get("name.last.en") as string) || "",
@@ -136,7 +153,9 @@ export async function updateCustomerAction(id: string, formData: FormData) {
   const nationality = formData.get("nationality") as string;
   const birthday = formData.get("birthday") as string | null;
   const gender = formData.get("gender") as string | null;
-  const residenceCardNumber = formData.get("residenceCardNumber") as string | null;
+  const residenceCardNumber = formData.get("residenceCardNumber") as
+    | string
+    | null;
   const expiryDate = formData.get("expiryDate") as string | null;
   const email = formData.get("email") as string | null;
   const phone = formData.get("phone") as string | null;
@@ -194,8 +213,10 @@ export async function updateCustomerAction(id: string, formData: FormData) {
         const details: Record<string, unknown> = {};
 
         // 氏名の変更を検出
-        const newNameStr = `${name.last.ja || name.last.en} ${name.first.ja || name.first.en}`.trim();
-        const oldNameStr = `${existingCustomer.name.last.ja || existingCustomer.name.last.en} ${existingCustomer.name.first.ja || existingCustomer.name.first.en}`.trim();
+        const newNameStr =
+          `${name.last.ja || name.last.en} ${name.first.ja || name.first.en}`.trim();
+        const oldNameStr =
+          `${existingCustomer.name.last.ja || existingCustomer.name.last.en} ${existingCustomer.name.first.ja || existingCustomer.name.first.en}`.trim();
         if (newNameStr !== oldNameStr) {
           changedFields.push("氏名");
           details.name = { oldValue: oldNameStr, newValue: newNameStr };
@@ -205,15 +226,20 @@ export async function updateCustomerAction(id: string, formData: FormData) {
         const newNationality = nationality.trim();
         if (newNationality !== existingCustomer.nationality) {
           changedFields.push("国籍");
-          details.nationality = { oldValue: existingCustomer.nationality, newValue: newNationality };
+          details.nationality = {
+            oldValue: existingCustomer.nationality,
+            newValue: newNationality,
+          };
         }
 
         // 生年月日の変更を検出
-        const newBirthday = birthday ? new Date(birthday).toISOString().split("T")[0] : null;
-        const oldBirthday = existingCustomer.birthday 
-          ? (existingCustomer.birthday instanceof Date 
-              ? existingCustomer.birthday.toISOString().split("T")[0]
-              : existingCustomer.birthday.toDate().toISOString().split("T")[0])
+        const newBirthday = birthday
+          ? new Date(birthday).toISOString().split("T")[0]
+          : null;
+        const oldBirthday = existingCustomer.birthday
+          ? existingCustomer.birthday instanceof Date
+            ? existingCustomer.birthday.toISOString().split("T")[0]
+            : existingCustomer.birthday.toDate().toISOString().split("T")[0]
           : null;
         if (newBirthday !== oldBirthday) {
           changedFields.push("生年月日");
@@ -224,61 +250,85 @@ export async function updateCustomerAction(id: string, formData: FormData) {
         const newGender = gender?.trim() || null;
         if (newGender !== existingCustomer.gender) {
           changedFields.push("性別");
-          details.gender = { oldValue: existingCustomer.gender, newValue: newGender };
+          details.gender = {
+            oldValue: existingCustomer.gender,
+            newValue: newGender,
+          };
         }
 
         // 在留カード番号の変更を検出
         const newResidenceCardNumber = residenceCardNumber?.trim() || null;
         if (newResidenceCardNumber !== existingCustomer.residenceCardNumber) {
           changedFields.push("在留カード番号");
-          details.residenceCardNumber = { oldValue: existingCustomer.residenceCardNumber, newValue: newResidenceCardNumber };
+          details.residenceCardNumber = {
+            oldValue: existingCustomer.residenceCardNumber,
+            newValue: newResidenceCardNumber,
+          };
         }
 
         // 在留期限の変更を検出
-        const newExpiryDate = expiryDate ? new Date(expiryDate).toISOString().split("T")[0] : null;
-        const oldExpiryDate = existingCustomer.expiryDate 
-          ? (existingCustomer.expiryDate instanceof Date 
-              ? existingCustomer.expiryDate.toISOString().split("T")[0]
-              : existingCustomer.expiryDate.toDate().toISOString().split("T")[0])
+        const newExpiryDate = expiryDate
+          ? new Date(expiryDate).toISOString().split("T")[0]
+          : null;
+        const oldExpiryDate = existingCustomer.expiryDate
+          ? existingCustomer.expiryDate instanceof Date
+            ? existingCustomer.expiryDate.toISOString().split("T")[0]
+            : existingCustomer.expiryDate.toDate().toISOString().split("T")[0]
           : null;
         if (newExpiryDate !== oldExpiryDate) {
           changedFields.push("在留期限");
-          details.expiryDate = { oldValue: oldExpiryDate, newValue: newExpiryDate };
+          details.expiryDate = {
+            oldValue: oldExpiryDate,
+            newValue: newExpiryDate,
+          };
         }
 
         // メールアドレスの変更を検出
         const newEmail = email?.trim() || null;
         if (newEmail !== existingCustomer.email) {
           changedFields.push("メールアドレス");
-          details.email = { oldValue: existingCustomer.email, newValue: newEmail };
+          details.email = {
+            oldValue: existingCustomer.email,
+            newValue: newEmail,
+          };
         }
 
         // 電話番号の変更を検出
         const newPhone = phone?.trim() || null;
         if (newPhone !== existingCustomer.phone) {
           changedFields.push("電話番号");
-          details.phone = { oldValue: existingCustomer.phone, newValue: newPhone };
+          details.phone = {
+            oldValue: existingCustomer.phone,
+            newValue: newPhone,
+          };
         }
 
         // 住所の変更を検出
         const newAddress = address?.trim() || null;
         if (newAddress !== existingCustomer.address) {
           changedFields.push("住所");
-          details.address = { oldValue: existingCustomer.address, newValue: newAddress };
+          details.address = {
+            oldValue: existingCustomer.address,
+            newValue: newAddress,
+          };
         }
 
         // 備考の変更を検出
         const newNotes = notes?.trim() || null;
         if (newNotes !== existingCustomer.notes) {
           changedFields.push("備考");
-          details.notes = { oldValue: existingCustomer.notes, newValue: newNotes };
+          details.notes = {
+            oldValue: existingCustomer.notes,
+            newValue: newNotes,
+          };
         }
 
         await createCustomerHistory(id, {
           actionType: "customer_updated",
-          description: changedFields.length > 0 
-            ? `${changedFields.join("、")}を更新しました`
-            : "顧客情報を更新しました",
+          description:
+            changedFields.length > 0
+              ? `${changedFields.join("、")}を更新しました`
+              : "顧客情報を更新しました",
           details: details,
           performedBy: user.id,
           performedByName: user.displayName || user.email,
@@ -298,15 +348,15 @@ export async function updateCustomerAction(id: string, formData: FormData) {
 
 export async function deleteCustomerAction(id: string) {
   await requireAuth();
-  
+
   try {
     // 関連する案件があるかチェック
     const projects = await getProjectsByCustomerId(id);
     if (projects.length > 0) {
-      return { 
+      return {
         error: `この顧客には${projects.length}件の案件が関連付けられています。先に案件を削除するか、別の顧客に変更してください。`,
         hasProjects: true,
-        projectCount: projects.length
+        projectCount: projects.length,
       };
     }
 
@@ -340,12 +390,26 @@ export async function searchCustomersAction(query: string) {
   }
 }
 
+export async function listCustomersPaginatedAction(
+  limit: number = 20,
+  offset: number = 0
+) {
+  await requireAuth();
+  try {
+    const result = await listCustomersPaginated(limit, offset);
+    return result;
+  } catch (error) {
+    console.error("Error fetching customers paginated:", error);
+    return { customers: [], hasMore: false };
+  }
+}
+
 export async function uploadCustomerDocumentAction(
   customerId: string,
   formData: FormData
 ) {
   await requireAuth();
-  
+
   const file = formData.get("file") as File | null;
   const label = formData.get("label") as string | null;
 
@@ -362,7 +426,9 @@ export async function uploadCustomerDocumentAction(
     return { success: true };
   } catch (error) {
     console.error("Error uploading customer document:", error);
-    return { error: "ファイルのアップロードに失敗しました。もう一度お試しください。" };
+    return {
+      error: "ファイルのアップロードに失敗しました。もう一度お試しください。",
+    };
   }
 }
 
@@ -371,7 +437,7 @@ export async function deleteCustomerDocumentAction(
   documentId: string
 ) {
   await requireAuth();
-  
+
   try {
     await deleteCustomerDocument(customerId, documentId);
     return { success: true };
@@ -386,22 +452,22 @@ export async function addCustomerNoteAction(
   content: string
 ) {
   await requireAuth();
-  
+
   if (!content || !content.trim()) {
     return { error: "メモの内容を入力してください" };
   }
-  
+
   try {
     const user = await getCurrentUser();
     if (!user) {
       return { error: "ユーザー情報の取得に失敗しました" };
     }
-    
+
     await addCustomerNote(customerId, {
       content: content.trim(),
       authorName: user.displayName || user.email,
     });
-    
+
     return { success: true };
   } catch (error) {
     console.error("Error adding customer note:", error);
@@ -419,4 +485,3 @@ export async function getCustomerHistoryAction(customerId: string) {
     return { error: "履歴の取得に失敗しました", history: [] };
   }
 }
-

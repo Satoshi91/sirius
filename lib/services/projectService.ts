@@ -1,4 +1,17 @@
-import { collection, getDocs, query, orderBy, addDoc, Timestamp, getDoc, doc, updateDoc, deleteDoc, where, arrayUnion } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  orderBy,
+  addDoc,
+  Timestamp,
+  getDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  where,
+  arrayUnion,
+} from "firebase/firestore";
 import { db } from "../firebase";
 import { Project, Note } from "@/types";
 import { getCustomersByIds, getCustomer } from "./customerService";
@@ -8,43 +21,52 @@ export async function getProjects(): Promise<Project[]> {
     const projectsRef = collection(db, "projects");
     const q = query(projectsRef, orderBy("createdAt", "desc"));
     const querySnapshot = await getDocs(q);
-    
+
     const projects = querySnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        title: data.title || '',
+        title: data.title || "",
         customerId: data.customerId,
         visaType: data.visaType,
         currentVisaType: data.currentVisaType,
         applicationDate: data.applicationDate?.toDate() || null,
-        status: data.status || 'pending',
+        status: data.status || "pending",
         paymentStatus: data.paymentStatus,
         organizationId: data.organizationId,
         createdBy: data.createdBy,
-        notes: data.notes ? (data.notes as Note[]).map((n) => ({
-          id: n.id,
-          content: n.content,
-          createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
-          authorName: n.authorName,
-        })) : undefined,
+        notes: data.notes
+          ? (data.notes as Note[]).map((n) => ({
+              id: n.id,
+              content: n.content,
+              createdAt:
+                n.createdAt instanceof Timestamp
+                  ? n.createdAt.toDate()
+                  : n.createdAt instanceof Date
+                    ? n.createdAt
+                    : new Date(),
+              authorName: n.authorName,
+            }))
+          : undefined,
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
       } as Project;
     });
-    
+
     // 顧客情報を一括取得して結合
-    const customerIds = [...new Set(projects.map(p => p.customerId).filter(Boolean))];
+    const customerIds = [
+      ...new Set(projects.map((p) => p.customerId).filter(Boolean)),
+    ];
     if (customerIds.length > 0) {
       const customers = await getCustomersByIds(customerIds);
-      const customerMap = new Map(customers.map(c => [c.id, c]));
-      projects.forEach(project => {
+      const customerMap = new Map(customers.map((c) => [c.id, c]));
+      projects.forEach((project) => {
         if (project.customerId) {
           project.customer = customerMap.get(project.customerId);
         }
       });
     }
-    
+
     return projects;
   } catch (error) {
     console.error("Error fetching projects:", error);
@@ -57,49 +79,56 @@ export async function getProject(id: string): Promise<Project | null> {
   try {
     const projectRef = doc(db, "projects", id);
     const projectSnap = await getDoc(projectRef);
-    
+
     if (!projectSnap.exists()) {
       return null;
     }
-    
+
     const data = projectSnap.data();
     const project: Project = {
       id: projectSnap.id,
-      title: data.title || '',
+      title: data.title || "",
       customerId: data.customerId,
       visaType: data.visaType,
       currentVisaType: data.currentVisaType,
       applicationDate: data.applicationDate?.toDate() || null,
-      status: data.status || 'pending',
+      status: data.status || "pending",
       paymentStatus: data.paymentStatus,
       organizationId: data.organizationId,
       createdBy: data.createdBy,
-      notes: data.notes ? (data.notes as Note[]).map((n) => {
-        let createdAt: Date;
-        if (n.createdAt instanceof Date) {
-          createdAt = n.createdAt;
-        } else if (n.createdAt && typeof n.createdAt === 'object' && 'toDate' in n.createdAt && typeof n.createdAt.toDate === 'function') {
-          createdAt = n.createdAt.toDate();
-        } else {
-          createdAt = new Date();
-        }
-        return {
-          id: n.id,
-          content: n.content,
-          createdAt,
-          authorName: n.authorName,
-        };
-      }) : undefined,
+      notes: data.notes
+        ? (data.notes as Note[]).map((n) => {
+            let createdAt: Date;
+            if (n.createdAt instanceof Date) {
+              createdAt = n.createdAt;
+            } else if (
+              n.createdAt &&
+              typeof n.createdAt === "object" &&
+              "toDate" in n.createdAt &&
+              typeof n.createdAt.toDate === "function"
+            ) {
+              createdAt = n.createdAt.toDate();
+            } else {
+              createdAt = new Date();
+            }
+            return {
+              id: n.id,
+              content: n.content,
+              createdAt,
+              authorName: n.authorName,
+            };
+          })
+        : undefined,
       createdAt: data.createdAt?.toDate() || new Date(),
       updatedAt: data.updatedAt?.toDate() || new Date(),
     };
-    
+
     // 顧客情報を取得して結合
     if (project.customerId) {
       const customer = await getCustomer(project.customerId);
       project.customer = customer || undefined;
     }
-    
+
     return project;
   } catch (error) {
     console.error("Error fetching project:", error);
@@ -113,24 +142,27 @@ export async function createProject(
   try {
     const projectsRef = collection(db, "projects");
     const now = Timestamp.now();
-    
+
     const projectData: Record<string, unknown> = {
       title: data.title,
       customerId: data.customerId,
-      visaType: data.visaType,
-      status: data.status || 'pending',
+      status: data.status || "pending",
       createdAt: now,
       updatedAt: now,
     };
-    
+
     // Only include optional fields if they have values (Firebase rejects undefined)
+    if (data.visaType !== undefined && data.visaType !== null) {
+      projectData.visaType = data.visaType;
+    }
     if (data.currentVisaType !== undefined && data.currentVisaType !== null) {
       projectData.currentVisaType = data.currentVisaType;
     }
     if (data.applicationDate !== undefined && data.applicationDate !== null) {
-      projectData.applicationDate = data.applicationDate instanceof Date 
-        ? Timestamp.fromDate(data.applicationDate) 
-        : data.applicationDate;
+      projectData.applicationDate =
+        data.applicationDate instanceof Date
+          ? Timestamp.fromDate(data.applicationDate)
+          : data.applicationDate;
     }
     if (data.organizationId !== undefined && data.organizationId !== null) {
       projectData.organizationId = data.organizationId;
@@ -157,23 +189,27 @@ export async function updateProject(
   try {
     const projectRef = doc(db, "projects", id);
     const now = Timestamp.now();
-    
+
     const updateData: Record<string, unknown> = {
       updatedAt: now,
     };
-    
+
     if (data.title !== undefined) updateData.title = data.title;
     if (data.customerId !== undefined) updateData.customerId = data.customerId;
     if (data.visaType !== undefined) updateData.visaType = data.visaType;
-    if (data.currentVisaType !== undefined) updateData.currentVisaType = data.currentVisaType || null;
+    if (data.currentVisaType !== undefined)
+      updateData.currentVisaType = data.currentVisaType || null;
     if (data.applicationDate !== undefined) {
-      updateData.applicationDate = data.applicationDate 
-        ? (data.applicationDate instanceof Date ? Timestamp.fromDate(data.applicationDate) : data.applicationDate)
+      updateData.applicationDate = data.applicationDate
+        ? data.applicationDate instanceof Date
+          ? Timestamp.fromDate(data.applicationDate)
+          : data.applicationDate
         : null;
     }
     if (data.status !== undefined) updateData.status = data.status;
-    if (data.paymentStatus !== undefined) updateData.paymentStatus = data.paymentStatus;
-    
+    if (data.paymentStatus !== undefined)
+      updateData.paymentStatus = data.paymentStatus;
+
     await updateDoc(projectRef, updateData);
   } catch (error) {
     console.error("Error updating project:", error);
@@ -191,31 +227,44 @@ export async function deleteProject(id: string): Promise<void> {
   }
 }
 
-export async function getProjectsByCustomerId(customerId: string): Promise<Project[]> {
+export async function getProjectsByCustomerId(
+  customerId: string
+): Promise<Project[]> {
   try {
     const projectsRef = collection(db, "projects");
-    const q = query(projectsRef, where("customerId", "==", customerId), orderBy("createdAt", "desc"));
+    const q = query(
+      projectsRef,
+      where("customerId", "==", customerId),
+      orderBy("createdAt", "desc")
+    );
     const querySnapshot = await getDocs(q);
-    
+
     return querySnapshot.docs.map((doc) => {
       const data = doc.data();
       return {
         id: doc.id,
-        title: data.title || '',
+        title: data.title || "",
         customerId: data.customerId,
         visaType: data.visaType,
         currentVisaType: data.currentVisaType,
         applicationDate: data.applicationDate?.toDate() || null,
-        status: data.status || 'pending',
+        status: data.status || "pending",
         paymentStatus: data.paymentStatus,
         organizationId: data.organizationId,
         createdBy: data.createdBy,
-        notes: data.notes ? (data.notes as Note[]).map((n) => ({
-          id: n.id,
-          content: n.content,
-          createdAt: n.createdAt instanceof Timestamp ? n.createdAt.toDate() : (n.createdAt instanceof Date ? n.createdAt : new Date()),
-          authorName: n.authorName,
-        })) : undefined,
+        notes: data.notes
+          ? (data.notes as Note[]).map((n) => ({
+              id: n.id,
+              content: n.content,
+              createdAt:
+                n.createdAt instanceof Timestamp
+                  ? n.createdAt.toDate()
+                  : n.createdAt instanceof Date
+                    ? n.createdAt
+                    : new Date(),
+              authorName: n.authorName,
+            }))
+          : undefined,
         createdAt: data.createdAt?.toDate() || new Date(),
         updatedAt: data.updatedAt?.toDate() || new Date(),
       } as Project;
@@ -238,14 +287,14 @@ export async function addProjectNote(
   try {
     const projectRef = doc(db, "projects", projectId);
     const now = Timestamp.now();
-    
+
     const newNote: Note = {
       id: crypto.randomUUID(),
       content: note.content,
       createdAt: now,
       authorName: note.authorName,
     };
-    
+
     await updateDoc(projectRef, {
       notes: arrayUnion(newNote),
       updatedAt: now,
@@ -255,4 +304,3 @@ export async function addProjectNote(
     throw error;
   }
 }
-

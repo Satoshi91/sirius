@@ -22,7 +22,7 @@ export async function createProjectAction(formData: FormData) {
   const title = formData.get("title") as string;
   const customerId = formData.get("customerId") as string;
   const currentVisaType = formData.get("currentVisaType") as string | null;
-  const visaType = formData.get("visaType") as string;
+  const visaType = formData.get("visaType") as string | null;
 
   // バリデーション
   if (!title || !title.trim()) {
@@ -31,17 +31,14 @@ export async function createProjectAction(formData: FormData) {
   if (!customerId || !customerId.trim()) {
     return { error: "顧客は必須です" };
   }
-  if (!visaType || !visaType.trim()) {
-    return { error: "在留資格は必須です" };
-  }
 
   try {
     const projectId = await createProject({
       title: title.trim(),
       customerId: customerId.trim(),
       currentVisaType: currentVisaType?.trim() || undefined,
-      visaType: visaType.trim(),
-      status: 'pending',
+      visaType: visaType?.trim() || undefined,
+      status: "pending",
     });
 
     // 操作履歴を記録
@@ -66,4 +63,3 @@ export async function createProjectAction(formData: FormData) {
     return { error: "案件の登録に失敗しました。もう一度お試しください。" };
   }
 }
-

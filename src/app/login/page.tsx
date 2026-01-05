@@ -108,6 +108,9 @@ export default function LoginPage() {
       ) {
         errorMessage =
           "このメールアドレスは既に別の認証方法で登録されています。";
+      } else if (firebaseError.code === "auth/unauthorized-domain") {
+        errorMessage =
+          "このドメインは認証に使用できません。Firebase Consoleで認証済みドメインに追加されているか確認してください。詳細は「doc/Firebase認証ドメイン設定ガイド.md」を参照してください。";
       } else if (firebaseError.message) {
         errorMessage = firebaseError.message;
       }

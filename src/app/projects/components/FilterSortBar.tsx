@@ -34,7 +34,9 @@ export default function FilterSortBar({
 }: FilterSortBarProps) {
   // ユニークな在留資格のリストを取得
   const uniqueVisaTypes = Array.from(
-    new Set(projects.map((p) => p.visaType).filter(Boolean))
+    new Set(
+      projects.map((p) => p.visaType).filter((v): v is string => Boolean(v))
+    )
   ).sort();
 
   return (
@@ -113,4 +115,3 @@ export default function FilterSortBar({
     </div>
   );
 }
-

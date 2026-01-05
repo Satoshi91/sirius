@@ -18,7 +18,7 @@ import { validateCustomerName } from "@/lib/utils/customerValidation";
 const projectFormSchema = z.object({
   title: z.string().min(1, "案件名は必須です"),
   currentVisaType: z.string().optional(),
-  visaType: z.string().min(1, "在留資格は必須です"),
+  visaType: z.string().optional(),
 });
 
 type ProjectFormData = z.infer<typeof projectFormSchema>;
@@ -28,7 +28,9 @@ export default function NewProjectPage() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [customerMode, setCustomerMode] = useState<"new" | "existing">("new");
-  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
+    null
+  );
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
   const [newCustomerFormData, setNewCustomerFormData] = useState({
     name: {
@@ -45,7 +47,9 @@ export default function NewProjectPage() {
     address: "",
     notes: "",
   });
-  const [newCustomerFieldErrors, setNewCustomerFieldErrors] = useState<Record<string, string>>({});
+  const [newCustomerFieldErrors, setNewCustomerFieldErrors] = useState<
+    Record<string, string>
+  >({});
 
   const {
     register,
@@ -86,16 +90,37 @@ export default function NewProjectPage() {
       // 新規顧客の場合は先に顧客を作成
       if (customerMode === "new") {
         const customerFormData = new FormData();
-        customerFormData.append("name.last.en", newCustomerFormData.name.last.en);
-        customerFormData.append("name.first.en", newCustomerFormData.name.first.en);
-        customerFormData.append("name.last.ja", newCustomerFormData.name.last.ja);
-        customerFormData.append("name.first.ja", newCustomerFormData.name.first.ja);
-        customerFormData.append("name.last.kana", newCustomerFormData.name.last.kana);
-        customerFormData.append("name.first.kana", newCustomerFormData.name.first.kana);
+        customerFormData.append(
+          "name.last.en",
+          newCustomerFormData.name.last.en
+        );
+        customerFormData.append(
+          "name.first.en",
+          newCustomerFormData.name.first.en
+        );
+        customerFormData.append(
+          "name.last.ja",
+          newCustomerFormData.name.last.ja
+        );
+        customerFormData.append(
+          "name.first.ja",
+          newCustomerFormData.name.first.ja
+        );
+        customerFormData.append(
+          "name.last.kana",
+          newCustomerFormData.name.last.kana
+        );
+        customerFormData.append(
+          "name.first.kana",
+          newCustomerFormData.name.first.kana
+        );
         customerFormData.append("nationality", newCustomerFormData.nationality);
         customerFormData.append("birthday", newCustomerFormData.birthday);
         customerFormData.append("gender", newCustomerFormData.gender);
-        customerFormData.append("residenceCardNumber", newCustomerFormData.residenceCardNumber);
+        customerFormData.append(
+          "residenceCardNumber",
+          newCustomerFormData.residenceCardNumber
+        );
         customerFormData.append("expiryDate", newCustomerFormData.expiryDate);
         customerFormData.append("email", newCustomerFormData.email);
         customerFormData.append("phone", newCustomerFormData.phone);
@@ -122,7 +147,7 @@ export default function NewProjectPage() {
       formDataToSubmit.append("title", data.title);
       formDataToSubmit.append("customerId", customerId);
       formDataToSubmit.append("currentVisaType", data.currentVisaType || "");
-      formDataToSubmit.append("visaType", data.visaType);
+      formDataToSubmit.append("visaType", data.visaType || "");
 
       const result = await createProjectAction(formDataToSubmit);
       if (result?.error) {
@@ -133,9 +158,10 @@ export default function NewProjectPage() {
     });
   };
 
-
   const handleCustomerFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value } = e.target;
     setNewCustomerFormData((prev) => ({ ...prev, [name]: value }));
@@ -150,19 +176,19 @@ export default function NewProjectPage() {
   };
 
   const handleCustomerNameChange = (path: string, value: string) => {
-    const [, , lastOrFirst, enJaOrKana] = path.split('.');
-    
+    const [, , lastOrFirst, enJaOrKana] = path.split(".");
+
     setNewCustomerFormData((prev) => ({
       ...prev,
       name: {
         ...prev.name,
         [lastOrFirst]: {
-          ...prev.name[lastOrFirst as 'last' | 'first'],
+          ...prev.name[lastOrFirst as "last" | "first"],
           [enJaOrKana]: value,
         },
       },
     }));
-    
+
     // エラーをクリア
     if (newCustomerFieldErrors[path]) {
       setNewCustomerFieldErrors((prev) => {
@@ -172,10 +198,10 @@ export default function NewProjectPage() {
       });
     }
     // 一般的なnameエラーもクリア
-    if (newCustomerFieldErrors['name']) {
+    if (newCustomerFieldErrors["name"]) {
       setNewCustomerFieldErrors((prev) => {
         const newErrors = { ...prev };
-        delete newErrors['name'];
+        delete newErrors["name"];
         return newErrors;
       });
     }
@@ -225,7 +251,9 @@ export default function NewProjectPage() {
               placeholder="案件名を入力"
             />
             {errors.title && (
-              <p className="mt-1 text-sm text-red-500">{errors.title.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.title.message}
+              </p>
             )}
           </div>
 
@@ -247,7 +275,7 @@ export default function NewProjectPage() {
             </div>
 
             {customerMode === "new" && (
-              <div className="border border-zinc-200 rounded-lg p-6 bg-zinc-50">
+              <div className="border border-zinc-200 rounded-lg p-6">
                 <CustomerFormFields
                   formData={newCustomerFormData}
                   onChange={handleCustomerFormChange}
@@ -261,7 +289,9 @@ export default function NewProjectPage() {
             {customerMode === "existing" && selectedCustomer && (
               <div className="border border-zinc-200 rounded-lg p-6 bg-zinc-50">
                 <div className="flex items-start justify-between mb-4">
-                  <h3 className="text-md font-semibold text-black">選択された顧客</h3>
+                  <h3 className="text-md font-semibold text-black">
+                    選択された顧客
+                  </h3>
                   <button
                     type="button"
                     onClick={handleBackToNewCustomer}
@@ -274,21 +304,30 @@ export default function NewProjectPage() {
                   formData={{
                     name: selectedCustomer.name,
                     nationality: selectedCustomer.nationality,
-                    birthday: selectedCustomer.birthday 
-                      ? (selectedCustomer.birthday instanceof Date 
-                          ? selectedCustomer.birthday.toISOString().split("T")[0]
-                          : (selectedCustomer.birthday instanceof Timestamp)
-                            ? selectedCustomer.birthday.toDate().toISOString().split("T")[0]
-                            : "")
+                    birthday: selectedCustomer.birthday
+                      ? selectedCustomer.birthday instanceof Date
+                        ? selectedCustomer.birthday.toISOString().split("T")[0]
+                        : selectedCustomer.birthday instanceof Timestamp
+                          ? selectedCustomer.birthday
+                              .toDate()
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
                       : "",
                     gender: selectedCustomer.gender || "",
-                    residenceCardNumber: selectedCustomer.residenceCardNumber || "",
-                    expiryDate: selectedCustomer.expiryDate 
-                      ? (selectedCustomer.expiryDate instanceof Date 
-                          ? selectedCustomer.expiryDate.toISOString().split("T")[0]
-                          : (selectedCustomer.expiryDate instanceof Timestamp)
-                            ? selectedCustomer.expiryDate.toDate().toISOString().split("T")[0]
-                            : "")
+                    residenceCardNumber:
+                      selectedCustomer.residenceCardNumber || "",
+                    expiryDate: selectedCustomer.expiryDate
+                      ? selectedCustomer.expiryDate instanceof Date
+                        ? selectedCustomer.expiryDate
+                            .toISOString()
+                            .split("T")[0]
+                        : selectedCustomer.expiryDate instanceof Timestamp
+                          ? selectedCustomer.expiryDate
+                              .toDate()
+                              .toISOString()
+                              .split("T")[0]
+                          : ""
                       : "",
                     email: selectedCustomer.email || "",
                     phone: selectedCustomer.phone || "",
@@ -299,7 +338,6 @@ export default function NewProjectPage() {
                 />
               </div>
             )}
-
           </div>
 
           <CustomerSearchModal
@@ -329,7 +367,7 @@ export default function NewProjectPage() {
               htmlFor="visaType"
               className="block text-sm font-medium text-black mb-2"
             >
-              申請予定の資格 <span className="text-red-500">*</span>
+              申請予定の資格
             </label>
             <input
               type="text"
@@ -343,7 +381,9 @@ export default function NewProjectPage() {
               placeholder="申請予定の資格を入力"
             />
             {errors.visaType && (
-              <p className="mt-1 text-sm text-red-500">{errors.visaType.message}</p>
+              <p className="mt-1 text-sm text-red-500">
+                {errors.visaType.message}
+              </p>
             )}
           </div>
 
@@ -373,4 +413,3 @@ export default function NewProjectPage() {
     </div>
   );
 }
-
