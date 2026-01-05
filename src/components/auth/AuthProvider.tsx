@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from "react";
 import { User as FirebaseUser } from "firebase/auth";
 import { onAuthStateChange } from "@/lib/auth/authClient";
 import { User } from "@/types";
@@ -30,24 +36,54 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+
+  // 初回ロード時にサーバー側の認証状態を確認
+  useEffect(() => {
+    const checkServerAuth = async () => {
+      try {
+        const response = await fetch("/api/auth/check");
+        const data = await response.json();
+
+        if (data.authenticated && data.user) {
+          // サーバー側で認証されている場合、ユーザー情報を設定
+          setUser(data.user as User);
+        } else {
+          // サーバー側で認証されていない場合
+          setUser(null);
+        }
+      } catch (error) {
+        console.error("Error checking server auth:", error);
+        setUser(null);
+      } finally {
+        setInitialized(true);
+        setLoading(false);
+      }
+    };
+
+    checkServerAuth();
+  }, []);
 
   useEffect(() => {
     // 認証状態の変更を監視（onAuthStateChangeは初期状態も発火する）
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
       setFirebaseUser(firebaseUser);
-      
+
       if (firebaseUser && firebaseUser.email) {
         // Firebase Authのユーザーが存在する場合、Firestoreからユーザープロファイルを取得
         await loadUserProfile(firebaseUser.email);
       } else {
         // ユーザーが存在しない場合
-        setUser(null);
-        setLoading(false);
+        // サーバー側の認証状態も確認済みの場合のみnullに設定
+        if (initialized) {
+          setUser(null);
+          setLoading(false);
+        }
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [initialized]);
 
   const loadUserProfile = async (email: string) => {
     try {
@@ -67,4 +103,3 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     </AuthContext.Provider>
   );
 }
-

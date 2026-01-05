@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Search, Bell, LogOut, User, ChevronDown } from "lucide-react";
 import { useAuth } from "./auth/AuthProvider";
 import { signOut } from "@/lib/auth/authClient";
@@ -19,13 +20,40 @@ import {
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+
+  // 認証されていない場合（loading完了後、userがnull）はログインページにリダイレクト
+  useEffect(() => {
+    // ログインページ自体ではリダイレクトしない
+    if (pathname?.startsWith("/login")) {
+      return;
+    }
+
+    // 認証状態の読み込みが完了し、ユーザーが存在しない場合
+    if (!loading && !user) {
+      router.push("/login");
+    }
+  }, [user, loading, pathname, router]);
 
   const handleLogout = async () => {
     try {
+      // Firebase Authからログアウト
       await signOut();
+
+      // 認証Cookieを削除
+      const clearCookieResponse = await fetch("/api/auth/clear-cookies", {
+        method: "POST",
+      });
+
+      if (!clearCookieResponse.ok) {
+        console.warn(
+          "Failed to clear auth cookies, but continuing with logout"
+        );
+      }
+
       toast.success("ログアウトしました");
-      router.push("/login");
+      // ページをリロードして認証状態を確実にリセット
+      window.location.href = "/login";
     } catch (error) {
       console.error("Error logging out:", error);
       toast.error("ログアウトに失敗しました");
@@ -97,7 +125,13 @@ export default function Header() {
               <Bell className="h-5 w-5" />
               <span className="hidden sm:inline">お知らせ</span>
             </button>
-            {user && (
+            {loading ? (
+              // 認証状態を読み込み中
+              <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-500">
+                読み込み中...
+              </div>
+            ) : user ? (
+              // ユーザーが存在する場合、ドロップダウンメニューを表示
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-700 hover:text-black transition-colors rounded-lg hover:bg-zinc-50">
@@ -125,6 +159,11 @@ export default function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            ) : (
+              // ユーザーが存在しない場合（リダイレクト処理中）
+              <div className="flex items-center gap-2 px-3 py-2 text-sm text-zinc-500">
+                認証中...
+              </div>
             )}
           </div>
         </div>
