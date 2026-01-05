@@ -129,6 +129,7 @@ export default function LoginPage() {
       const result = await handleGuestLogin();
 
       if (result.error) {
+        console.error("[handleGuestSignIn] Guest login error:", result.error);
         setError(result.error);
         setLoading(false);
         return;
@@ -200,14 +201,23 @@ export default function LoginPage() {
       // ページをリロードしてFirebase Authの状態を確実に同期
       window.location.href = "/projects";
     } catch (error: unknown) {
-      console.error("Error logging in as guest:", error);
+      console.error("[handleGuestSignIn] Error logging in as guest:", error);
+
+      // エラーの詳細をログに出力
+      if (error instanceof Error) {
+        console.error("[handleGuestSignIn] Error name:", error.name);
+        console.error("[handleGuestSignIn] Error message:", error.message);
+        console.error("[handleGuestSignIn] Error stack:", error.stack);
+      }
 
       // エラーメッセージを日本語化
       let errorMessage =
         "ゲストログインに失敗しました。もう一度お試しください。";
-      const firebaseError = error as { message?: string };
+      const firebaseError = error as { message?: string; code?: string };
       if (firebaseError.message) {
         errorMessage = firebaseError.message;
+      } else if (firebaseError.code) {
+        errorMessage = `エラーコード: ${firebaseError.code}`;
       }
 
       setError(errorMessage);
