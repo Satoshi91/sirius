@@ -2,6 +2,8 @@ import { requireAuth } from "@/lib/auth/auth";
 import CalendarView from "./components/CalendarView";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
+export const dynamic = "force-dynamic";
+
 export default async function CalendarPage() {
   await requireAuth();
 
@@ -20,4 +22,3 @@ export default async function CalendarPage() {
     </div>
   );
 }
-
