@@ -99,9 +99,11 @@ export async function handleGuestLogin() {
   try {
     // 開発環境またはstaging環境（preview環境）でのみ有効
     // 本番環境（production）では無効
+    // サーバーアクション内では process.env.VERCEL_ENV を使用（Vercelが自動設定）
+    const vercelEnv =
+      process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_ENV;
     const isProduction =
-      process.env.NODE_ENV === "production" &&
-      process.env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
+      process.env.NODE_ENV === "production" && vercelEnv === "production";
     if (isProduction) {
       return { error: "ゲストログインは開発環境でのみ利用可能です。" };
     }

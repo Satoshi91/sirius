@@ -479,12 +479,12 @@ export async function uploadCustomerDocumentFile(
 /**
  * 顧客の重要書類メタデータをFirestoreに保存する（既にアップロード済みのファイル用）
  * @param customerId 顧客ID
- * @param documentData ドキュメントデータ
+ * @param documentData ドキュメントデータ（uploadedAtは不要、サーバー側で自動設定される）
  * @returns 作成されたドキュメントID
  */
 export async function saveCustomerDocumentMetadata(
   customerId: string,
-  documentData: CustomerDocument
+  documentData: Omit<CustomerDocument, "uploadedAt">
 ): Promise<string> {
   try {
     const customerRef = doc(db, "customers", customerId);

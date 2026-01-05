@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useState,
+  useRef,
   ReactNode,
 } from "react";
 import { User as FirebaseUser } from "firebase/auth";
@@ -36,7 +37,16 @@ export default function AuthProvider({ children }: AuthProviderProps) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false);
+  const [serverAuthInitialized, setServerAuthInitialized] = useState(false);
+  const [firebaseAuthInitialized, setFirebaseAuthInitialized] = useState(false);
+  const serverAuthInitializedRef = useRef(false);
+
+  // 両方の認証チェックが完了したらloadingをfalseにする
+  useEffect(() => {
+    if (serverAuthInitialized && firebaseAuthInitialized) {
+      setLoading(false);
+    }
+  }, [serverAuthInitialized, firebaseAuthInitialized]);
 
   // 初回ロード時にサーバー側の認証状態を確認
   useEffect(() => {
@@ -56,8 +66,8 @@ export default function AuthProvider({ children }: AuthProviderProps) {
         console.error("Error checking server auth:", error);
         setUser(null);
       } finally {
-        setInitialized(true);
-        setLoading(false);
+        serverAuthInitializedRef.current = true;
+        setServerAuthInitialized(true);
       }
     };
 
@@ -68,6 +78,7 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     // 認証状態の変更を監視（onAuthStateChangeは初期状態も発火する）
     const unsubscribe = onAuthStateChange(async (firebaseUser) => {
       setFirebaseUser(firebaseUser);
+      setFirebaseAuthInitialized(true);
 
       if (firebaseUser && firebaseUser.email) {
         // Firebase Authのユーザーが存在する場合、Firestoreからユーザープロファイルを取得
@@ -75,15 +86,14 @@ export default function AuthProvider({ children }: AuthProviderProps) {
       } else {
         // ユーザーが存在しない場合
         // サーバー側の認証状態も確認済みの場合のみnullに設定
-        if (initialized) {
+        if (serverAuthInitializedRef.current) {
           setUser(null);
-          setLoading(false);
         }
       }
     });
 
     return () => unsubscribe();
-  }, [initialized]);
+  }, []);
 
   const loadUserProfile = async (email: string) => {
     try {
@@ -92,8 +102,6 @@ export default function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       console.error("Error loading user profile:", error);
       setUser(null);
-    } finally {
-      setLoading(false);
     }
   };
 

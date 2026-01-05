@@ -157,13 +157,12 @@ export default function CustomerDocumentUploadModal({
 
     setIsRegistering(true);
     try {
-      const documentData: CustomerDocument = {
+      const documentData = {
         id: uploadedFileInfo.uuid,
         label: label,
         fileUrl: uploadedFileInfo.fileUrl,
         storagePath: uploadedFileInfo.storagePath,
         fileName: selectedFile.name,
-        uploadedAt: new Date(),
       };
 
       await saveCustomerDocumentMetadata(customerId, documentData);
