@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import {
   signInWithPopup,
   GoogleAuthProvider,
-  signInWithCustomToken,
+  signInWithEmailAndPassword,
 } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { handleLoginSuccess, handleGuestLogin } from "./actions";
+import { handleLoginSuccess } from "./actions";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -125,24 +125,19 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // サーバーアクションでゲストログイン処理（カスタムトークン生成）
-      const result = await handleGuestLogin();
-
-      if (result.error) {
-        console.error("[handleGuestSignIn] Guest login error:", result.error);
-        setError(result.error);
-        setLoading(false);
-        return;
+      // 環境変数からゲストパスワードを取得
+      const guestPassword = process.env.NEXT_PUBLIC_GUEST_PASSWORD;
+      if (!guestPassword) {
+        throw new Error("ゲストログインのパスワードが設定されていません");
       }
 
-      if (!result.customToken) {
-        throw new Error("カスタムトークンの取得に失敗しました");
-      }
+      const guestEmail = "s.t.n.uytrewq+guest@gmail.com";
 
-      // Firebase Authenticationでカスタムトークンを使用してログイン
-      const userCredential = await signInWithCustomToken(
+      // Firebase Authenticationでメールアドレス/パスワードでログイン
+      const userCredential = await signInWithEmailAndPassword(
         auth,
-        result.customToken
+        guestEmail,
+        guestPassword
       );
       const firebaseUser = userCredential.user;
 
@@ -214,7 +209,17 @@ export default function LoginPage() {
       let errorMessage =
         "ゲストログインに失敗しました。もう一度お試しください。";
       const firebaseError = error as { message?: string; code?: string };
-      if (firebaseError.message) {
+      if (firebaseError.code === "auth/user-not-found") {
+        errorMessage =
+          "ゲストユーザーが存在しません。Firebase Consoleでユーザーを作成してください。";
+      } else if (firebaseError.code === "auth/wrong-password") {
+        errorMessage =
+          "パスワードが間違っています。環境変数を確認してください。";
+      } else if (firebaseError.code === "auth/invalid-email") {
+        errorMessage = "メールアドレスの形式が正しくありません。";
+      } else if (firebaseError.code === "auth/user-disabled") {
+        errorMessage = "このアカウントは無効化されています。";
+      } else if (firebaseError.message) {
         errorMessage = firebaseError.message;
       } else if (firebaseError.code) {
         errorMessage = `エラーコード: ${firebaseError.code}`;
