@@ -106,8 +106,8 @@ export default function ProjectsPageClient({
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col h-full space-y-4">
+      <div className="flex items-center gap-4 flex-shrink-0">
         <h1 className="text-3xl font-bold text-blue-900 whitespace-nowrap">
           案件管理
         </h1>
@@ -131,17 +131,19 @@ export default function ProjectsPageClient({
           </Button>
         </Link>
       </div>
-      <div className="rounded-md border border-blue-200 bg-white">
-        <ImmigrationCaseTable
-          projects={paginatedProjects}
-          statusFilter={statusFilter}
-          onStatusFilterChange={handleStatusFilterChange}
-          visaTypeFilter={visaTypeFilter}
-          onVisaTypeFilterChange={handleVisaTypeFilterChange}
-          visaTypes={visaTypes}
-        />
+      <div className="flex-1 flex flex-col min-h-0 rounded-md border border-blue-200 bg-white overflow-hidden">
+        <div className="flex-1 overflow-auto">
+          <ImmigrationCaseTable
+            projects={paginatedProjects}
+            statusFilter={statusFilter}
+            onStatusFilterChange={handleStatusFilterChange}
+            visaTypeFilter={visaTypeFilter}
+            onVisaTypeFilterChange={handleVisaTypeFilterChange}
+            visaTypes={visaTypes}
+          />
+        </div>
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-4 border-t border-blue-200">
+          <div className="flex items-center justify-between px-4 py-4 border-t border-blue-200 flex-shrink-0">
             <div className="text-sm text-gray-700">
               {startIndex + 1} - {Math.min(endIndex, filteredProjects.length)} /{" "}
               {filteredProjects.length} 件

@@ -9,11 +9,10 @@ export default async function ProjectsPage() {
   const projects = await getProjects();
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50/50 to-white py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="h-full bg-gradient-to-b from-blue-50/50 to-white py-4 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto h-full flex flex-col">
         <ProjectsPageClient projects={projects} />
       </div>
     </div>
   );
 }
-

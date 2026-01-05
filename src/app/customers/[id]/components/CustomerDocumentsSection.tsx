@@ -1,104 +1,30 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Customer } from "@/types";
 import { deleteCustomerDocumentAction } from "../../actions";
-import { uploadCustomerDocument } from "@/lib/services/customerService";
-import { auth } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Upload, X, Eye, Loader2 } from "lucide-react";
+import { Upload, X, Eye } from "lucide-react";
 import Image from "next/image";
+import CustomerDocumentUploadModal from "./CustomerDocumentUploadModal";
 
 interface CustomerDocumentsSectionProps {
   customerId: string;
   customer: Customer;
 }
 
-const LABEL_OPTIONS = [
-  { value: "passport", label: "パスポート" },
-  { value: "residence_card_front", label: "在留カード表面" },
-  { value: "residence_card_back", label: "在留カード裏面" },
-  { value: "other", label: "その他" },
-];
-
 export default function CustomerDocumentsSection({
   customerId,
   customer,
 }: CustomerDocumentsSectionProps) {
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [selectedLabel, setSelectedLabel] = useState<string>("");
-  const [customLabel, setCustomLabel] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   const documents = customer.documents || [];
-
-  const handleFileSelect = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // ラベルの決定
-    let label = "";
-    if (selectedLabel === "other") {
-      label = customLabel.trim();
-      if (!label) {
-        toast.error("ラベルを入力してください");
-        return;
-      }
-    } else {
-      const option = LABEL_OPTIONS.find((opt) => opt.value === selectedLabel);
-      label = option?.label || "";
-      if (!label) {
-        toast.error("ラベルを選択してください");
-        return;
-      }
-    }
-
-    setIsUploading(true);
-    try {
-      // #region agent log
-      const currentUser = auth.currentUser;
-      const userEmail = currentUser?.email || null;
-      fetch('http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'CustomerDocumentsSection.tsx:72',message:'handleFileChange before upload',data:{customerId,label,userEmail,hasAuth:!!currentUser},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
-      // #endregion
-      
-      await uploadCustomerDocument(customerId, file, label);
-      toast.success("ファイルをアップロードしました");
-      router.refresh();
-      // フォームをリセット
-      setSelectedLabel("");
-      setCustomLabel("");
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      // より詳細なエラーメッセージを表示
-      if (error instanceof Error) {
-        toast.error(`ファイルのアップロードに失敗しました: ${error.message}`);
-      } else {
-        toast.error("ファイルのアップロードに失敗しました。もう一度お試しください。");
-      }
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleDelete = async (documentId: string) => {
     if (!confirm("このファイルを削除してもよろしいですか？")) {
@@ -127,6 +53,10 @@ export default function CustomerDocumentsSection({
     setPreviewUrl(null);
   };
 
+  const handleUploadSuccess = () => {
+    router.refresh();
+  };
+
   return (
     <>
       <Card>
@@ -135,80 +65,15 @@ export default function CustomerDocumentsSection({
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            {/* アップロードフォーム */}
-            <div className="space-y-4 border-b pb-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">
-                    ラベル <span className="text-red-500">*</span>
-                  </label>
-                  <Select
-                    value={selectedLabel}
-                    onValueChange={setSelectedLabel}
-                    disabled={isUploading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="ラベルを選択" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LABEL_OPTIONS.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedLabel === "other" && (
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      カスタムラベル <span className="text-red-500">*</span>
-                    </label>
-                    <Input
-                      type="text"
-                      value={customLabel}
-                      onChange={(e) => setCustomLabel(e.target.value)}
-                      placeholder="ラベルを入力"
-                      disabled={isUploading}
-                    />
-                  </div>
-                )}
-
-                <div className={selectedLabel === "other" ? "md:col-span-2" : ""}>
-                  <label className="block text-sm font-medium text-black mb-2">
-                    ファイル <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*,.pdf"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      disabled={isUploading}
-                    />
-                    <Button
-                      type="button"
-                      onClick={handleFileSelect}
-                      disabled={isUploading || !selectedLabel || (selectedLabel === "other" && !customLabel.trim())}
-                      className="flex-1"
-                    >
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          アップロード中...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 h-4 w-4" />
-                          ファイルを選択
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            {/* アップロードボタン */}
+            <div className="border-b pb-6">
+              <Button
+                onClick={() => setIsModalOpen(true)}
+                className="w-full md:w-auto"
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                新規登録
+              </Button>
             </div>
 
             {/* アップロード済みファイル一覧 */}
@@ -226,7 +91,9 @@ export default function CustomerDocumentsSection({
                       <div className="aspect-video relative bg-zinc-100 rounded overflow-hidden">
                         {doc.fileUrl && (
                           <>
-                            {doc.fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                            {doc.fileUrl.match(
+                              /\.(jpg|jpeg|png|gif|webp)$/i
+                            ) ? (
                               <Image
                                 src={doc.fileUrl}
                                 alt={doc.label}
@@ -238,7 +105,9 @@ export default function CustomerDocumentsSection({
                               <div className="flex items-center justify-center h-full">
                                 <div className="text-center">
                                   <Eye className="h-8 w-8 mx-auto mb-2 text-zinc-400" />
-                                  <p className="text-xs text-zinc-500">PDFファイル</p>
+                                  <p className="text-xs text-zinc-500">
+                                    PDFファイル
+                                  </p>
                                 </div>
                               </div>
                             )}
@@ -247,8 +116,12 @@ export default function CustomerDocumentsSection({
                       </div>
                       <div className="space-y-2">
                         <div>
-                          <p className="text-sm font-medium text-black">{doc.label}</p>
-                          <p className="text-xs text-zinc-500 truncate">{doc.fileName}</p>
+                          <p className="text-sm font-medium text-black">
+                            {doc.label}
+                          </p>
+                          <p className="text-xs text-zinc-500 truncate">
+                            {doc.fileName}
+                          </p>
                         </div>
                         <div className="flex gap-2">
                           <Button
@@ -282,6 +155,14 @@ export default function CustomerDocumentsSection({
           </div>
         </CardContent>
       </Card>
+
+      {/* ファイルアップロードモーダル */}
+      <CustomerDocumentUploadModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        customerId={customerId}
+        onSuccess={handleUploadSuccess}
+      />
 
       {/* プレビューモーダル */}
       {previewUrl && (
@@ -328,4 +209,3 @@ export default function CustomerDocumentsSection({
     </>
   );
 }
-

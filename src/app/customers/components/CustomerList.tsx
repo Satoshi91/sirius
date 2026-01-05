@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { FileText, Trash2 } from "lucide-react";
-import { getDisplayName, getFullNameJa, getFullNameKana, getFullNameEn } from "@/lib/utils/customerName";
+import { getDisplayName, getFullNameKana } from "@/lib/utils/customerName";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { deleteCustomerAction } from "../actions";
 import { useRouter } from "next/navigation";
@@ -23,13 +23,13 @@ interface CustomerListProps {
   customers: Customer[];
 }
 
-export default function CustomerList({
-  customers,
-}: CustomerListProps) {
+export default function CustomerList({ customers }: CustomerListProps) {
   const router = useRouter();
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(null);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState<string | null>(
+    null
+  );
   const [isPending, startTransition] = useTransition();
-  
+
   // 開発モードの判定
   const isDevelopment = process.env.NODE_ENV !== "production";
 
@@ -67,9 +67,8 @@ export default function CustomerList({
         <Table>
           <TableHeader>
             <TableRow className="bg-blue-50">
-              <TableHead>氏名（漢字）</TableHead>
-              <TableHead>氏名（カタカナ）</TableHead>
-              <TableHead>氏名（英語）</TableHead>
+              <TableHead>氏名</TableHead>
+              <TableHead>氏名(カタカナ)</TableHead>
               <TableHead>国籍</TableHead>
               <TableHead>メールアドレス</TableHead>
               <TableHead>電話番号</TableHead>
@@ -83,14 +82,13 @@ export default function CustomerList({
                 className="hover:bg-blue-50/50 transition-colors"
               >
                 <TableCell>
-                  <div className="font-medium text-black">{getDisplayName(customer)}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-gray-700">{getFullNameKana(customer) || "-"}</div>
+                  <div className="font-medium text-black">
+                    {getDisplayName(customer)}
+                  </div>
                 </TableCell>
                 <TableCell>
                   <div className="text-gray-700">
-                    {getFullNameEn(customer) || getFullNameJa(customer) || "-"}
+                    {getFullNameKana(customer) || "-"}
                   </div>
                 </TableCell>
                 <TableCell>
@@ -129,23 +127,25 @@ export default function CustomerList({
           </TableBody>
         </Table>
       </div>
-      
-      {deleteConfirmOpen && (() => {
-        const customerToDelete = customers.find(c => c.id === deleteConfirmOpen);
-        return customerToDelete ? (
-          <ConfirmDialog
-            isOpen={true}
-            onClose={handleCloseDeleteConfirm}
-            onConfirm={() => handleDeleteConfirm(deleteConfirmOpen)}
-            title="顧客の削除"
-            message={`顧客「${getDisplayName(customerToDelete)}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
-            confirmText="削除"
-            cancelText="キャンセル"
-            variant="destructive"
-          />
-        ) : null;
-      })()}
+
+      {deleteConfirmOpen &&
+        (() => {
+          const customerToDelete = customers.find(
+            (c) => c.id === deleteConfirmOpen
+          );
+          return customerToDelete ? (
+            <ConfirmDialog
+              isOpen={true}
+              onClose={handleCloseDeleteConfirm}
+              onConfirm={() => handleDeleteConfirm(deleteConfirmOpen)}
+              title="顧客の削除"
+              message={`顧客「${getDisplayName(customerToDelete)}」を削除してもよろしいですか？\nこの操作は取り消せません。`}
+              confirmText="削除"
+              cancelText="キャンセル"
+              variant="destructive"
+            />
+          ) : null;
+        })()}
     </>
   );
 }
-

@@ -34,21 +34,35 @@ export default function Header() {
 
   // ロールに応じてメニューをフィルタリング
   const visibleMenuItems = sidebarMenuItems.filter((item) => {
-    if (item.adminOnly && user?.role !== 'admin') {
+    if (item.adminOnly && user?.role !== "admin") {
       return false;
     }
     return true;
   });
+
+  // 環境判定: ローカル開発環境またはVercel preview環境の場合にプレビュー版を表示
+  const isPreviewEnv =
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
 
   return (
     <header className="sticky top-0 z-40 w-full bg-white border-b border-zinc-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main Header Content */}
         <div className="flex items-center justify-between h-16 gap-4">
+          {/* Preview Badge */}
+          {isPreviewEnv && (
+            <div className="flex items-center flex-shrink-0">
+              <span className="px-2.5 py-1 text-xs font-semibold text-amber-700 bg-amber-100 rounded-md border border-amber-200">
+                プレビュー版
+              </span>
+            </div>
+          )}
           {/* Left: Navigation Links */}
           <nav className="flex items-center gap-1 flex-shrink-0">
             {visibleMenuItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <Link
                   key={item.href}
@@ -97,12 +111,15 @@ export default function Header() {
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium">{user.displayName}</p>
                       <p className="text-xs text-zinc-500">
-                        {user.role === 'admin' ? '管理者' : 'スタッフ'}
+                        {user.role === "admin" ? "管理者" : "スタッフ"}
                       </p>
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>ログアウト</span>
                   </DropdownMenuItem>
@@ -115,4 +132,3 @@ export default function Header() {
     </header>
   );
 }
-

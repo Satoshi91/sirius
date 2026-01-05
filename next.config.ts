@@ -1,15 +1,18 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_VERCEL_ENV: process.env.VERCEL_ENV,
+  },
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: '**.firebasestorage.app',
+        protocol: "https",
+        hostname: "**.firebasestorage.app",
       },
       {
-        protocol: 'https',
-        hostname: '**.googleapis.com',
+        protocol: "https",
+        hostname: "**.googleapis.com",
       },
     ],
   },
@@ -20,10 +23,10 @@ const nextConfig: NextConfig = {
         poll: 1000, // 1秒ごとにポーリング
         aggregateTimeout: 300, // 変更後の待機時間
         ignored: [
-          '**/node_modules/**',
-          '**/.git/**',
-          '**/.next/**',
-          '**/.cursor/**', // デバッグログファイルをウォッチ対象から除外
+          "**/node_modules/**",
+          "**/.git/**",
+          "**/.next/**",
+          "**/.cursor/**", // デバッグログファイルをウォッチ対象から除外
         ],
       };
     }

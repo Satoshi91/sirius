@@ -445,6 +445,69 @@ export async function searchCustomers(
 }
 
 /**
+ * 顧客の重要書類ファイルをCloud Storageにアップロードする（メタデータ保存は行わない）
+ * @param customerId 顧客ID
+ * @param file アップロードするファイル
+ * @returns アップロード結果（fileUrl, storagePath, uuid）
+ */
+export async function uploadCustomerDocumentFile(
+  customerId: string,
+  file: File
+): Promise<{ fileUrl: string; storagePath: string; uuid: string }> {
+  try {
+    // UUIDを生成してファイル名を作成
+    const uuid = crypto.randomUUID();
+    const fileExtension = file.name.split(".").pop() || "";
+    const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
+    const fileName = `${fileNameWithoutExt}_${uuid}.${fileExtension}`;
+    const storagePath = `customers/${customerId}/documents/${fileName}`;
+
+    // Cloud Storageにアップロード
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, file);
+
+    // ダウンロードURLを取得
+    const fileUrl = await getDownloadURL(storageRef);
+
+    return { fileUrl, storagePath, uuid };
+  } catch (error) {
+    console.error("Error uploading customer document file:", error);
+    throw error;
+  }
+}
+
+/**
+ * 顧客の重要書類メタデータをFirestoreに保存する（既にアップロード済みのファイル用）
+ * @param customerId 顧客ID
+ * @param documentData ドキュメントデータ
+ * @returns 作成されたドキュメントID
+ */
+export async function saveCustomerDocumentMetadata(
+  customerId: string,
+  documentData: CustomerDocument
+): Promise<string> {
+  try {
+    const customerRef = doc(db, "customers", customerId);
+    const now = Timestamp.now();
+
+    // 既存のdocuments配列を取得して追加
+    const customerSnap = await getDoc(customerRef);
+    const existingData = customerSnap.data();
+    const existingDocuments = existingData?.documents || [];
+
+    await updateDoc(customerRef, {
+      documents: [...existingDocuments, { ...documentData, uploadedAt: now }],
+      updatedAt: now,
+    });
+
+    return documentData.id;
+  } catch (error) {
+    console.error("Error saving customer document metadata:", error);
+    throw error;
+  }
+}
+
+/**
  * 顧客の重要書類をCloud Storageにアップロードし、Firestoreにメタデータを保存する
  * @param customerId 顧客ID
  * @param file アップロードするファイル
@@ -516,39 +579,11 @@ export async function uploadCustomerDocument(
     }
     // #endregion
 
-    // UUIDを生成してファイル名を作成
-    const uuid = crypto.randomUUID();
-    const fileExtension = file.name.split(".").pop() || "";
-    const fileNameWithoutExt = file.name.replace(/\.[^/.]+$/, "");
-    const fileName = `${fileNameWithoutExt}_${uuid}.${fileExtension}`;
-    const storagePath = `customers/${customerId}/documents/${fileName}`;
-
-    // #region agent log
-    fetch("http://127.0.0.1:7242/ingest/3d25e911-5548-4daa-8038-5ea7ce13809a", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        location: "customerService.ts:302",
-        message: "before uploadBytes",
-        data: { storagePath },
-        timestamp: Date.now(),
-        sessionId: "debug-session",
-        runId: "run1",
-        hypothesisId: "D",
-      }),
-    }).catch(() => {});
-    // #endregion
-
-    // Cloud Storageにアップロード
-    const storageRef = ref(storage, storagePath);
-    await uploadBytes(storageRef, file);
-
-    // ダウンロードURLを取得
-    const fileUrl = await getDownloadURL(storageRef);
-
-    // Firestoreのcustomersドキュメントを更新してdocuments配列に追加
-    const customerRef = doc(db, "customers", customerId);
-    const now = Timestamp.now();
+    // 新しい関数を使用してアップロードとメタデータ保存を行う
+    const { fileUrl, storagePath, uuid } = await uploadCustomerDocumentFile(
+      customerId,
+      file
+    );
 
     const documentData: CustomerDocument = {
       id: uuid,
@@ -556,18 +591,10 @@ export async function uploadCustomerDocument(
       fileUrl: fileUrl,
       storagePath: storagePath,
       fileName: file.name,
-      uploadedAt: now,
+      uploadedAt: Timestamp.now(),
     };
 
-    // 既存のdocuments配列を取得して追加
-    const customerSnap = await getDoc(customerRef);
-    const existingData = customerSnap.data();
-    const existingDocuments = existingData?.documents || [];
-
-    await updateDoc(customerRef, {
-      documents: [...existingDocuments, documentData],
-      updatedAt: now,
-    });
+    await saveCustomerDocumentMetadata(customerId, documentData);
 
     return uuid;
   } catch (error) {
