@@ -102,9 +102,22 @@ export async function handleGuestLogin() {
     // サーバーアクション内では process.env.VERCEL_ENV を使用（Vercelが自動設定）
     const vercelEnv =
       process.env.VERCEL_ENV || process.env.NEXT_PUBLIC_VERCEL_ENV;
-    const isProduction =
-      process.env.NODE_ENV === "production" && vercelEnv === "production";
+    const nodeEnv = process.env.NODE_ENV;
+    const isProduction = nodeEnv === "production" && vercelEnv === "production";
+
+    // デバッグログ: 環境変数の値を確認
+    console.log("[handleGuestLogin] Environment check:", {
+      NODE_ENV: nodeEnv,
+      VERCEL_ENV: process.env.VERCEL_ENV,
+      NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+      vercelEnv,
+      isProduction,
+    });
+
     if (isProduction) {
+      console.log(
+        "[handleGuestLogin] Blocked: Production environment detected"
+      );
       return { error: "ゲストログインは開発環境でのみ利用可能です。" };
     }
 
@@ -132,7 +145,26 @@ export async function handleGuestLogin() {
 
     // Firebase Admin SDKでFirebase Authのユーザーを作成または更新
     // これにより、カスタムトークンでログインした際にメールアドレスが取得できるようになります
-    const adminAuth = getFirebaseAdminAuth();
+    console.log("[handleGuestLogin] Initializing Firebase Admin SDK...");
+    let adminAuth;
+    try {
+      adminAuth = getFirebaseAdminAuth();
+      console.log(
+        "[handleGuestLogin] Firebase Admin SDK initialized successfully"
+      );
+    } catch (error) {
+      console.error(
+        "[handleGuestLogin] Firebase Admin SDK initialization failed:",
+        error
+      );
+      // 環境変数の確認
+      console.error("[handleGuestLogin] Environment variables check:", {
+        FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID ? "✓" : "✗",
+        FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL ? "✓" : "✗",
+        FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY ? "✓" : "✗",
+      });
+      throw error;
+    }
     try {
       // 既存のユーザーを取得
       await adminAuth.getUser(guestEmail);
@@ -194,9 +226,42 @@ export async function handleGuestLogin() {
     // Firebase Admin SDKを使用してカスタムトークンを生成
     const customToken = await createCustomToken(guestEmail, guestEmail, true);
 
+    console.log("[handleGuestLogin] Custom token generated successfully");
     return { success: true, customToken };
   } catch (error) {
-    console.error("Error handling guest login:", error);
+    console.error("[handleGuestLogin] Error handling guest login:", error);
+
+    // より詳細なエラー情報をログに出力
+    if (error instanceof Error) {
+      console.error("[handleGuestLogin] Error message:", error.message);
+      console.error("[handleGuestLogin] Error stack:", error.stack);
+
+      // Firebase Admin SDK関連のエラーの場合
+      if (
+        error.message.includes("Firebase Admin SDK") ||
+        error.message.includes("FIREBASE")
+      ) {
+        console.error("[handleGuestLogin] Firebase Admin SDK error detected");
+        console.error("[handleGuestLogin] Environment variables:", {
+          FIREBASE_PROJECT_ID: process.env.FIREBASE_PROJECT_ID
+            ? "✓ Set"
+            : "✗ Missing",
+          FIREBASE_CLIENT_EMAIL: process.env.FIREBASE_CLIENT_EMAIL
+            ? "✓ Set"
+            : "✗ Missing",
+          FIREBASE_PRIVATE_KEY: process.env.FIREBASE_PRIVATE_KEY
+            ? "✓ Set"
+            : "✗ Missing",
+        });
+      }
+    } else {
+      console.error(
+        "[handleGuestLogin] Unknown error type:",
+        typeof error,
+        error
+      );
+    }
+
     return {
       error: "ゲストログイン処理に失敗しました。もう一度お試しください。",
     };
